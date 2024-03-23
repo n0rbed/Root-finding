@@ -1,16 +1,14 @@
-
 using Symbolics
 
 coeff = Symbolics.coeff
 function solve_poly(expression, x)
-    simple_expression = expand(expression)
-    simple_expression = simplify.(simple_expression)
-    degree = Symbolics.degree(simple_expression, x)
+    if isequal(SymbolicUtils.operation(expression.val), ^) && SymbolicUtils.arguments(expression.val)[2] isa Int64
+        expression = SymbolicUtils.arguments(expression.val)[1]
+    end
 
-
-    expression = simple_expression
-
-
+    expression = expand(expression)
+    expression = simplify.(expression)
+    degree = Symbolics.degree(expression, x)
 
 
     if degree == 0 && expression == 0
@@ -20,13 +18,16 @@ function solve_poly(expression, x)
     end
 
     if degree == 1
-        m = Symbolics.coeff(expression, x)
-        c = coeff(expression)
+        # mx + c = 0
+        coeffs, constant = polynomial_coeffs(expression, [x])
+        m = coeffs[x]
+        c = coeffs[x^0]
         root = -c / m
         return root
     end
 
     if degree == 2
+        # ax^2 + bx + c
         coeffs, constant = polynomial_coeffs(expression, [x])
 
         a = coeffs[x^2]
@@ -52,6 +53,6 @@ function solve_poly(polys::Vector, x)
 end
 
 @variables x a
-ex = x^2 + 2a*x + a^2
+ex = (x^2 + 2*x + 1)^20
 println("x --> ", solve_poly(ex, x))
   # Output --> 2.0
