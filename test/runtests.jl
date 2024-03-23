@@ -1,3 +1,6 @@
-using Test, main
+using Test, RootFinding, Symbolics
 
-@test solve_poly
+@variables x
+
+@test isequal(solvepoly(x - 1, x), 1)
+
