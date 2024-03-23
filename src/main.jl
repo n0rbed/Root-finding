@@ -55,4 +55,3 @@ end
 @variables x a
 ex = (x^2 + 2*x + 1)^20
 println("x --> ", solve_poly(ex, x))
-  # Output --> 2.0
