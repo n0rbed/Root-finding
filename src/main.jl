@@ -1,4 +1,4 @@
-using Symbolics
+using Symbolics, Groebner, SymbolicUtils
 
 coeff = Symbolics.coeff
 function solve(expression, x)
@@ -52,46 +52,68 @@ function solve(polys::Vector, x::Num)
     return solve(expression, x)
 end
 
-
+function contains(var, vars)
+    for variable in vars
+        if isequal(var, variable)
+            return true
+        end
+    end
+    return false
+end
 function solve(eqs::Vector{Num}, vars::Vector{Num})
-    eqs = Symbolics.groebner_basis(eqs)
+    eqs = convert(Vector{Any}, Symbolics.groebner_basis(eqs))
     all_roots = Dict()
 
     # initialize the place of each var
     for var in vars
-        all_roots[var] = nothing
+        all_roots[var] = [] 
     end
 
 
     #get roots for first var (z in this case)
-    for eq in eqs
-        for var in vars
-            present_vars = Symbolics.get_variables(eq)
-            if isequal(var, present_vars[1]) && size(present_vars, 1) == 1 
-                var = Symbolics.get_variables(eq)[1]
-                all_roots[var] = solve(Symbolics.wrap(eq), var)
-            end
-        end
-    end
-
-    
-    # sub z, this is really messy and not systematic
-    # as changing the number of vars will force me to
-    # write more code, so i should think
-    # of a better way to design this
-    for (var, roots) in all_roots
-        if !isnothing(roots)
-            for eq in eqs
-                if var in Symbolics.get_variables(eq)
-                    substitute(eq, Dict([var => roots]))
+    solved = false
+    while !solved
+        # first, solve any single variable equations
+        for eq in eqs
+            for var in vars
+                present_vars = Symbolics.get_variables(eq)
+                if contains(var, present_vars) && size(present_vars, 1) == 1 
+                    var = Symbolics.get_variables(eq)[1]
+                    append!(all_roots[var], solve(Symbolics.wrap(eq), var))
                 end
             end
         end
+
+        # second, Substitute the roots of the variables where found
+        for (i, eq) in pairs(eqs)
+            for var in vars
+                present_vars = Symbolics.get_variables(eq)
+
+                if contains(var, present_vars) && !isequal(all_roots[var], [])
+                    deleteat!(eqs, i)
+
+                    for root in all_roots[var]
+                        push!(eqs, substitute(eq, Dict([var => root])))
+                    end
+
+                end
+            end
+        end
+
+
+        solved = true
+        for (var, value) in all_roots
+            if isequal(value, [])
+                solved = false
+            end
+        end
     end
+    return all_roots
 end
 
 @variables x y z
 equations = [x*y + z - 40, x*z + y - 51, x + y + z - 19]
 
 expr = [x^2 - 3*x - 10, x^2 + 20*x + 36]
-println("x --> ", roots(expr, x))
+println("equations to solve: ", equations)
+println(solve(equations, [x, y , z]))
