@@ -52,6 +52,9 @@ function solve(polys::Vector, x::Num)
     return solve(expression, x)
 end
 
+
+
+
 function contains(var, vars)
     for variable in vars
         if isequal(var, variable)
@@ -60,6 +63,8 @@ function contains(var, vars)
     end
     return false
 end
+
+
 function solve(eqs::Vector{Num}, vars::Vector{Num})
     eqs = convert(Vector{Any}, Symbolics.groebner_basis(eqs))
     all_roots = Dict()
