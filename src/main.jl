@@ -98,7 +98,7 @@ function solve(eqs::Vector{Num}, vars::Vector{Num})
                     deleteat!(eqs, i)
 
                     for root in all_roots[var]
-                        push!(eqs, substitute(eq, Dict([var => root])))
+                        insert!(eqs, i, substitute(eq, Dict([var => root])))
                     end
 
                 end
