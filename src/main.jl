@@ -39,6 +39,45 @@ function solve(expression, x)
 
         return [root1, root2]
     end
+
+    if degree == 3
+        coeffs, constant = polynomial_coeffs(expression, [x])
+
+        a = coeffs[x^3]
+
+        arr = []
+        for exp in [2, 1, 0]
+            try
+                    var = coeffs[x^exp]
+                    append!(arr, var)
+            catch e
+                if isa(e, KeyError)
+                    append!(0, arr)
+                end
+            end
+        end
+
+        b, c, d = (arr[1], arr[2], arr[3])
+
+        Q = ((3*a*c) - b^2)/(9a^2)
+        R = (9*a*b*c - ((27*(a^2)*d)+2b^3))/(54a^3)
+
+        S = (R + (Q^3+R^2)^(1/2))^(1/3)
+        T = (R - (Q^3+R^2)^(1/2))^(1/3)
+
+        root1 = S + T - (b/(3*a))
+        root2 = -((S+T)/2) - (b/(3*a)) + (im*(3^(1/2))/2)*(S-T)
+        root3 = -((S+T)/2) - (b/(3*a)) - (im*(3^(1/2))/2)*(S-T)
+        
+        if imag.(root2) == 0
+            root2 = real.(root2)
+        end
+        if imag.(root3) == 0
+            root3 = real.(root3)
+        end
+        return [real.(root1), root2, root3]
+    end
+
 end
 
 function solve(polys::Vector, x::Num)
@@ -117,8 +156,7 @@ function solve(eqs::Vector{Num}, vars::Vector{Num})
 end
 
 @variables x y z
-equations = [x*y + z - 40, x*z + y - 51, x + y + z - 19]
+eq = 4 + 8x + 5x^2 + x^3
 
-expr = [x^2 - 3*x - 10, x^2 + 20*x + 36]
-println("equations to solve: ", equations)
-println(solve(equations, [x, y , z]))
+println("equations to solve: ", eq)
+println(solve(eq, x))
