@@ -20,8 +20,8 @@ function solve(expression, x)
     if degree == 1
         # mx + c = 0
         coeffs, constant = polynomial_coeffs(expression, [x])
-        m = coeffs[x]
-        c = coeffs[x^0]
+        m = get(coeffs, x, 0)
+        c = get(coeffs, x^0, 0)
         root = -c / m
         return root
     end
@@ -31,8 +31,8 @@ function solve(expression, x)
         coeffs, constant = polynomial_coeffs(expression, [x])
 
         a = coeffs[x^2]
-        b = coeffs[x]
-        c = coeffs[x^0]
+        b = get(coeffs, x, 0)
+        c = get(coeffs, x^0, 0)
 
         root1 = simplify(expand((-b + Symbolics.Term(sqrt, [(b^2 - 4(a*c))])) / 2a))
         root2 = simplify(expand((-b - Symbolics.Term(sqrt, [(b^2 - 4(a*c))])) / 2a))
@@ -44,26 +44,15 @@ function solve(expression, x)
         coeffs, constant = polynomial_coeffs(expression, [x])
 
         a = coeffs[x^3]
-
-        arr = []
-        for exp in [2, 1, 0]
-            try
-                    var = coeffs[x^exp]
-                    append!(arr, var)
-            catch e
-                if isa(e, KeyError)
-                    append!(0, arr)
-                end
-            end
-        end
-
-        b, c, d = (arr[1], arr[2], arr[3])
+        b = get(coeffs, x^2, 0)
+        c = get(coeffs, x, 0)
+        d = get(coeffs, x^0, 0)
 
         Q = ((3*a*c) - b^2)/(9a^2)
         R = (9*a*b*c - ((27*(a^2)*d)+2b^3))/(54a^3)
 
         S = (R + (Q^3+R^2)^(1/2))^(1/3)
-        T = (R - (Q^3+R^2)^(1/2))^(1/3)
+        T = complex((R - (Q^3+R^2)^(1/2)))^(1/3)
 
         root1 = S + T - (b/(3*a))
         root2 = -((S+T)/2) - (b/(3*a)) + (im*(3^(1/2))/2)*(S-T)
@@ -156,7 +145,7 @@ function solve(eqs::Vector{Num}, vars::Vector{Num})
 end
 
 @variables x y z
-eq = 4 + 8x + 5x^2 + x^3
+eq = x^3 + 5x^2 + 8x +4
 
 println("equations to solve: ", eq)
 println(solve(eq, x))
