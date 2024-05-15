@@ -67,6 +67,35 @@ function solve(expression, x)
         return [real.(root1), root2, root3]
     end
 
+    if degree == 4
+
+        coeffs, constant = polynomial_coeffs(expression, [x])
+
+        a = coeffs[x^4]
+        b = get(coeffs, x^3, 0)
+        c = get(coeffs, x^2, 0)
+        d = get(coeffs, x, 0)
+        e = get(coeffs, x^0, 0)
+
+        Δ₀ = c^2 - 3*b*d + 12*a*e
+        Δ₁ = 2c^3 - 9*b*c*d + 27(b^2)*e + 27*a*d^2 - 72*a*c*e
+
+        p = (8*a*c - 3b^2)/(8a^2)
+        q = (b^3 - 4*a*b*c + 8(a^2)*d)/(8a^3)
+
+        Q = ((Δ₁+(sqrt(Δ₁^2 - 4Δ₀^3)))/2)^(1/3)
+        S = 0.5 * sqrt((-2/3)*p + (1/3a)*(Q+(Δ₀/Q)))
+
+
+        root1 = -(b/4a) - S + (1/2)*sqrt((-4*S^2)- 2p + (q/S))
+        root2 = -(b/4a) - S - (1/2)*sqrt((-4*S^2)- 2p + (q/S))
+
+        root3 = -(b/4a) + S + (1/2)*sqrt((-4*S^2)- 2p + (q/S))
+        root4 = -(b/4a) + S - (1/2)*sqrt((-4*S^2)- 2p + (q/S))
+
+        return [root1, root2, root3, root4]
+    end
+
 end
 
 function solve(polys::Vector, x::Num)
@@ -145,7 +174,7 @@ function solve(eqs::Vector{Num}, vars::Vector{Num})
 end
 
 @variables x y z
-eq = x^3 + 5x^2 + 8x +4
+eq = -12 - 20x - 7x^2 + 2x^3 + x^4
 
 println("equations to solve: ", eq)
 println(solve(eq, x))
