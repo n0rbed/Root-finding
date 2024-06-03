@@ -79,19 +79,24 @@ function solve(expression, x)
 
         Δ₀ = c^2 - 3*b*d + 12*a*e
         Δ₁ = 2c^3 - 9*b*c*d + 27(b^2)*e + 27*a*d^2 - 72*a*c*e
+        Δ = (-1/27)*(Δ₁^2 - (4*(Δ₀^3)))
+
 
         p = (8*a*c - 3b^2)/(8a^2)
         q = (b^3 - 4*a*b*c + 8(a^2)*d)/(8a^3)
 
-        Q = ((Δ₁+(sqrt(Δ₁^2 - 4Δ₀^3)))/2)^(1/3)
+        global Q = ((Δ₁+(sqrt(Δ₁^2 - 4Δ₀^3)))/2)^(1/3)
+        if (Δ₀ == 0) && (Δ != 0)
+            global Q = ((2*Δ₁)/2)^(1/3)
+        end
         S = 0.5 * sqrt((-2/3)*p + (1/3a)*(Q+(Δ₀/Q)))
 
 
         root1 = -(b/4a) - S + (1/2)*sqrt((-4*S^2)- 2p + (q/S))
         root2 = -(b/4a) - S - (1/2)*sqrt((-4*S^2)- 2p + (q/S))
 
-        root3 = -(b/4a) + S + (1/2)*sqrt((-4*S^2)- 2p + (q/S))
-        root4 = -(b/4a) + S - (1/2)*sqrt((-4*S^2)- 2p + (q/S))
+        root3 = -(b/4a) + S + (1/2)*sqrt((-4*S^2)- 2p - (q/S))
+        root4 = -(b/4a) + S - (1/2)*sqrt((-4*S^2)- 2p - (q/S))
 
         return [root1, root2, root3, root4]
     end
