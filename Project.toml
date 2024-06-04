@@ -1,0 +1,9 @@
+name = "RootFinding"
+uuid = "c0ff32c7-3bea-4b1e-a272-535b1f31d922"
+authors = ["n0rbed <yassinahmad789@gmail.com>"]
+version = "0.1.0"
+
+[deps]
+Groebner = "0b43b601-686d-58a3-8a1c-6623616c7cd4"
+SymbolicUtils = "d1185830-fcd6-423d-90d6-eec64667417b"
+Symbolics = "0c5d862f-8b57-4792-8d23-62f2024744c7"

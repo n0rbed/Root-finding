@@ -1,6 +1,6 @@
 module RootFinding
 
 include("main.jl")
-export solve_poly
+export solve
 
 end

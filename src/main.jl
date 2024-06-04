@@ -2,8 +2,11 @@ using Symbolics, Groebner, SymbolicUtils
 
 coeff = Symbolics.coeff
 function solve(expression, x)
-    if isequal(SymbolicUtils.operation(expression.val), ^) && SymbolicUtils.arguments(expression.val)[2] isa Int64
-        expression = SymbolicUtils.arguments(expression.val)[1]
+    if isequal(imag.(expression), 0)
+        expression = real.(expression)
+        if isequal(SymbolicUtils.operation(expression.val), ^) && SymbolicUtils.arguments(expression.val)[2] isa Int64
+            expression = SymbolicUtils.arguments(expression.val)[1]
+        end
     end
 
     expression = expand(expression)
@@ -77,28 +80,32 @@ function solve(expression, x)
         d = get(coeffs, x, 0)
         e = get(coeffs, x^0, 0)
 
-        Δ₀ = c^2 - 3*b*d + 12*a*e
-        Δ₁ = 2c^3 - 9*b*c*d + 27(b^2)*e + 27*a*d^2 - 72*a*c*e
-        Δ = (-1/27)*(Δ₁^2 - (4*(Δ₀^3)))
+        p = (8(a*c)-3(b^2))/(8(a^2))
 
+        q = (b^3 - 4(a*b*c) + 8(d*a^2))/(8*a^3)
 
-        p = (8*a*c - 3b^2)/(8a^2)
-        q = (b^3 - 4*a*b*c + 8(a^2)*d)/(8a^3)
+        r = (-3(b^4) + 256(e*a^3) - 64(d*b*a^2) + 16(c*(b^2)*a))/(256*a^4)
 
-        global Q = ((Δ₁+(sqrt(Δ₁^2 - 4Δ₀^3)))/2)^(1/3)
-        if (Δ₀ == 0) && (Δ != 0)
-            global Q = ((2*Δ₁)/2)^(1/3)
+        @variables m y
+        eq_m = 8m^3 + 8(p)*m^2 + (2(p^2) - 8r)m - q^2
+        roots_m = solve(eq_m, m)
+        m = 0
+        for root in roots_m
+            if root != 0
+                m = root
+                break
+            end
         end
-        S = 0.5 * sqrt((-2/3)*p + (1/3a)*(Q+(Δ₀/Q)))
 
+        root1, root2 = solve(y^2 + (p/2) + m + ((2m)^(1/2))*y - (q/(2*((2m)^(1/2)))), y)
+        root3, root4 = solve(y^2 + (p/2) + m - ((2m)^(1/2))*y + (q/(2*((2m)^(1/2)))), y)
 
-        root1 = -(b/4a) - S + (1/2)*sqrt((-4*S^2)- 2p + (q/S))
-        root2 = -(b/4a) - S - (1/2)*sqrt((-4*S^2)- 2p + (q/S))
+        arr = [root1, root2, root3, root4]
+        for (i, root) in enumerate(arr)
+            arr[i] = root - (b/(4a))
+        end
 
-        root3 = -(b/4a) + S + (1/2)*sqrt((-4*S^2)- 2p - (q/S))
-        root4 = -(b/4a) + S - (1/2)*sqrt((-4*S^2)- 2p - (q/S))
-
-        return [root1, root2, root3, root4]
+        return arr
     end
 
 end
