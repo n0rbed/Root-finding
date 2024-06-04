@@ -51,20 +51,20 @@ function solve(expression, x)
         c = get(coeffs, x, 0)
         d = get(coeffs, x^0, 0)
 
-        Q = ((3*a*c) - b^2)/(9a^2)
-        R = (9*a*b*c - ((27*(a^2)*d)+2b^3))/(54a^3)
+        Q = ((3*a*c) - b^2)//(9a^2)
+        R = (9*a*b*c - ((27*(a^2)*d)+2b^3))//(54a^3)
 
-        S = (R + (Q^3+R^2)^(1/2))^(1/3)
-        T = complex((R - (Q^3+R^2)^(1/2)))^(1/3)
+        S = Symbolics.term(cbrt, (R + Symbolics.term(sqrt, (Q^3+R^2))))
+        T = Symbolics.term(complex, Symbolics.term(cbrt, (R - Symbolics.term(sqrt, (Q^3+R^2)))))
 
-        root1 = S + T - (b/(3*a))
-        root2 = -((S+T)/2) - (b/(3*a)) + (im*(3^(1/2))/2)*(S-T)
-        root3 = -((S+T)/2) - (b/(3*a)) - (im*(3^(1/2))/2)*(S-T)
+        root1 = S + T - (b//(3*a))
+        root2 = -((S+T)//2) - (b//(3*a)) + (im*(Symbolics.term(sqrt, 3))/2)*(S-T)
+        root3 = -((S+T)//2) - (b//(3*a)) - (im*(Symbolics.term(sqrt, 3))/2)*(S-T)
         
-        if imag.(root2) == 0
+        if imag.(eval(Symbolics.toexpr(root2))) == 0
             root2 = real.(root2)
         end
-        if imag.(root3) == 0
+        if imag.(eval(Symbolics.toexpr(root3))) == 0
             root3 = real.(root3)
         end
         return [real.(root1), root2, root3]
@@ -185,8 +185,5 @@ function solve(eqs::Vector{Num}, vars::Vector{Num})
     return all_roots
 end
 
-@variables x y z
-eq = -12 - 20x - 7x^2 + 2x^3 + x^4
-
-println("equations to solve: ", eq)
-println(solve(eq, x))
+@variables x
+print(solve(x^3 -2x^2 + x - 2, x))
