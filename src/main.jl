@@ -185,5 +185,3 @@ function solve(eqs::Vector{Num}, vars::Vector{Num})
     return all_roots
 end
 
-@variables x
-print(solve(x^3 -2x^2 + x - 2, x))
