@@ -2,8 +2,11 @@ using Symbolics, Groebner, SymbolicUtils
 
 coeff = Symbolics.coeff
 function solve(expression, x)
-    if isequal(SymbolicUtils.operation(expression.val), ^) && SymbolicUtils.arguments(expression.val)[2] isa Int64
-        expression = SymbolicUtils.arguments(expression.val)[1]
+    if isequal(imag.(expression), 0)
+        expression = real.(expression)
+        if isequal(SymbolicUtils.operation(expression.val), ^) && SymbolicUtils.arguments(expression.val)[2] isa Int64
+            expression = SymbolicUtils.arguments(expression.val)[1]
+        end
     end
 
     expression = expand(expression)
@@ -86,10 +89,10 @@ function solve(expression, x)
         @variables m y
         eq_m = 8m^3 + 8(p)*m^2 + (2(p^2) - 8r)m - q^2
         roots_m = solve(eq_m, m)
-        global m = 0
+        m = 0
         for root in roots_m
             if root != 0
-                global m = real.(root)
+                m = root
                 break
             end
         end
@@ -97,9 +100,9 @@ function solve(expression, x)
         root1, root2 = solve(y^2 + (p/2) + m + ((2m)^(1/2))*y - (q/(2*((2m)^(1/2)))), y)
         root3, root4 = solve(y^2 + (p/2) + m - ((2m)^(1/2))*y + (q/(2*((2m)^(1/2)))), y)
 
-        global arr = [root1, root2, root3, root4]
+        arr = [root1, root2, root3, root4]
         for (i, root) in enumerate(arr)
-            global arr[i] = root - (b/(4a))
+            arr[i] = root - (b/(4a))
         end
 
         return arr
