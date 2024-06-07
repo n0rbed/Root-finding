@@ -2,6 +2,20 @@ using Symbolics, Groebner, SymbolicUtils
 using Nemo
 
 coeff = Symbolics.coeff
+
+function solve_quad(expression, x)
+    coeffs, constant = polynomial_coeffs(expression, [x])
+
+    a = coeffs[x^2]
+    b = get(coeffs, x, 0)
+    c = get(coeffs, x^0, 0)
+
+    root1 = simplify(expand((-b + Symbolics.Term(sqrt, [(b^2 - 4(a*c))])) / 2a))
+    root2 = simplify(expand((-b - Symbolics.Term(sqrt, [(b^2 - 4(a*c))])) / 2a))
+
+    return [root1, root2]
+end
+
 function solve(expression, x)
     if isequal(imag.(expression), 0)
         expression = real.(expression)
@@ -24,8 +38,8 @@ function solve(expression, x)
     if degree == 1
         # mx + c = 0
         coeffs, constant = polynomial_coeffs(expression, [x])
-        m = get(coeffs, x, 0)
-        c = get(coeffs, x^0, 0)
+        m = rationalize(get(coeffs, x, 0))
+        c = rationalize(get(coeffs, x^0, 0))
         root = -c / m
         return root
     end
@@ -34,9 +48,9 @@ function solve(expression, x)
         # ax^2 + bx + c
         coeffs, constant = polynomial_coeffs(expression, [x])
 
-        a = coeffs[x^2]
-        b = get(coeffs, x, 0)
-        c = get(coeffs, x^0, 0)
+        a = rationalize(coeffs[x^2])
+        b = rationalize(get(coeffs, x, 0))
+        c = rationalize(get(coeffs, x^0, 0))
 
         root1 = simplify(expand((-b + Symbolics.Term(sqrt, [(b^2 - 4(a*c))])) / 2a))
         root2 = simplify(expand((-b - Symbolics.Term(sqrt, [(b^2 - 4(a*c))])) / 2a))
@@ -47,10 +61,10 @@ function solve(expression, x)
     if degree == 3
         coeffs, constant = polynomial_coeffs(expression, [x])
 
-        a = coeffs[x^3]
-        b = get(coeffs, x^2, 0)
-        c = get(coeffs, x, 0)
-        d = get(coeffs, x^0, 0)
+        a = rationalize(coeffs[x^3])
+        b = rationalize(get(coeffs, x^2, 0))
+        c = rationalize(get(coeffs, x, 0))
+        d = rationalize(get(coeffs, x^0, 0))
 
         Q = ((3*a*c) - b^2)//(9a^2)
         R = (9*a*b*c - ((27*(a^2)*d)+2b^3))//(54a^3)
@@ -79,47 +93,57 @@ function solve(expression, x)
         # end
       
         # root1 is always real
-        return [real.(root1), root2, root3]
+        return [root1, root2, root3]
     end
 
     if degree == 4
 
         coeffs, constant = polynomial_coeffs(expression, [x])
 
-        a = coeffs[x^4]
-        b = get(coeffs, x^3, 0)
-        c = get(coeffs, x^2, 0)
-        d = get(coeffs, x, 0)
-        e = get(coeffs, x^0, 0)
+        a = rationalize(coeffs[x^4])
+        b = rationalize(get(coeffs, x^3, 0))
+        c = rationalize(get(coeffs, x^2, 0))
+        d = rationalize(get(coeffs, x, 0))
+        e = rationalize(get(coeffs, x^0, 0))
 
-        p = (8(a*c)-3(b^2))/(8(a^2))
+        p = (8(a*c)-3(b^2))//(8(a^2))
 
-        q = (b^3 - 4(a*b*c) + 8(d*a^2))/(8*a^3)
+        q = (b^3 - 4(a*b*c) + 8(d*a^2))//(8*a^3)
 
-        r = (-3(b^4) + 256(e*a^3) - 64(d*b*a^2) + 16(c*(b^2)*a))/(256*a^4)
+        r = (-3(b^4) + 256(e*a^3) - 64(d*b*a^2) + 16(c*(b^2)*a))//(256*a^4)
 
         @variables m y
         eq_m = 8m^3 + 8(p)*m^2 + (2(p^2) - 8r)m - q^2
         roots_m = solve(eq_m, m)
         m = 0
         for root in roots_m
-            if isequal(root, 0)
+            if !isequal(root, 0)
                 m = root
                 break
             end
         end
 
-        root1, root2 = solve(y^2 + (p/2) + m + ((2m)^(1/2))*y - (q/(2*((2m)^(1/2)))), y)
-        root3, root4 = solve(y^2 + (p/2) + m - ((2m)^(1/2))*y + (q/(2*((2m)^(1/2)))), y)
+        root1, root2 = solve_quad(y^2 + (p/2) + m + ((2m)^(1/2))*y - (q/(2*((2m)^(1/2)))), y)
+        root3, root4 = solve_quad(y^2 + (p/2) + m - ((2m)^(1/2))*y + (q/(2*((2m)^(1/2)))), y)
 
         arr = [root1, root2, root3, root4]
         for (i, root) in enumerate(arr)
-            arr[i] = root - (b/(4a))
+            arr[i] = root - (b//(4a))
         end
 
         return arr
     end
 
+    u, factors = factor_use_nemo(expression)
+    @assert isequal(expand(expression - u*prod(factors)), 0)
+
+    arr_roots = []
+
+    for factor in factors
+        append!(arr_roots, solve(factor, x))
+    end
+
+    return arr_roots
 end
 
 function solve(polys::Vector, x::Num)
@@ -233,21 +257,5 @@ function factor_use_nemo(poly)
 end
 
 @variables x
-eq = 42 + 22x + 31(x^2) - 5(x^3) - 14(x^4) - 5(x^5) - 6(x^6) + x^7
-
-u, factors = factor_use_nemo(eq)
-@assert isequal(expand(eq - u*prod(factors)), 0)
-#=
-julia> factors
-3-element Vector{Num}:
-                                -(2//1) + x^2
-                                  -(7//1) + x
- (3//1) + (2//1)*x + (4//1)*(x^2) + x^3 + x^4
-=#
-
-solve(factors[1], x)
-solve(factors[2], x)
-solve(factors[3], x) # hmm
-
-
-
+eq = (3//1) + (2//1)*x + (4//1)*(x^2) + x^3 + x^4
+println(solve(eq, x))
