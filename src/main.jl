@@ -1,4 +1,5 @@
 using Symbolics, Groebner, SymbolicUtils
+using Nemo
 
 coeff = Symbolics.coeff
 function solve(expression, x)
@@ -69,6 +70,14 @@ function solve(expression, x)
         root2 = -((S+T)//2) - (b//(3*a)) + (im*(Symbolics.term(sqrt, 3))/2)*(S-T)
         root3 = -((S+T)//2) - (b//(3*a)) - (im*(Symbolics.term(sqrt, 3))/2)*(S-T)
         
+
+        # if imag.(eval(Symbolics.toexpr(root2))) == 0
+        #     root2 = real.(root2)
+        # end
+        # if imag.(eval(Symbolics.toexpr(root3))) == 0
+        #     root3 = real.(root3)
+        # end
+      
         # root1 is always real
         return [real.(root1), root2, root3]
     end
@@ -94,7 +103,7 @@ function solve(expression, x)
         roots_m = solve(eq_m, m)
         m = 0
         for root in roots_m
-            if root != 0
+            if isequal(root, 0)
                 m = root
                 break
             end
@@ -123,9 +132,6 @@ function solve(polys::Vector, x::Num)
     expression = simplify.(expression)
     return solve(expression, x)
 end
-
-
-
 
 function contains(var, vars)
     for variable in vars
@@ -187,3 +193,61 @@ function solve(eqs::Vector{Num}, vars::Vector{Num})
     end
     return all_roots
 end
+    
+    
+
+# Map each variable of the given poly.
+# Can be used to transform Nemo polynomial to Symbolics expression.
+function nemo_crude_evaluate(poly::Nemo.MPolyRingElem, varmap)
+    @assert Nemo.coefficient_ring(poly) in (Nemo.ZZ, Nemo.QQ)
+    new_poly = 0
+    for (i, term) in enumerate(Nemo.terms(poly))
+        new_term = Rational(Nemo.coeff(poly, i))
+        for var in Nemo.vars(term)
+            exp = Nemo.degree(term, var)
+            exp == 0 && continue
+            new_var = varmap[var]
+            new_term *= new_var^exp
+        end
+        new_poly += new_term
+    end
+    new_poly
+end
+
+# x^2*y + b*x*y - a*x - a*b  ->  (x*y - a)*(x + b)
+function factor_use_nemo(poly)
+    vars = Symbolics.get_variables(poly)
+    distr, rem = Symbolics.polynomial_coeffs(poly, vars)
+    @assert isequal(rem, 0) "Not a polynomial"
+    @assert all(c -> c isa Integer || c isa Rational, collect(values(distr))) "Coefficients must be integer or rational"
+    nemo_ring, nemo_vars = Nemo.polynomial_ring(Nemo.QQ, map(string, vars))
+    sym_to_nemo = Dict(vars .=> nemo_vars)
+    nemo_to_sym = Dict(v => k for (k, v) in sym_to_nemo)
+    nemo_poly = Symbolics.substitute(poly, sym_to_nemo)
+    nemo_fac = Nemo.factor(nemo_poly)
+    nemo_unit = Nemo.unit(nemo_fac)
+    nemo_factors = collect(keys(nemo_fac.fac)) # TODO: do not forget multiplicities
+    sym_unit = Rational(Nemo.coeff(nemo_unit, 1))
+    sym_factors = map(f -> Symbolics.wrap(nemo_crude_evaluate(f, nemo_to_sym)), nemo_factors)
+    sym_unit, sym_factors
+end
+
+@variables x
+eq = 42 + 22x + 31(x^2) - 5(x^3) - 14(x^4) - 5(x^5) - 6(x^6) + x^7
+
+u, factors = factor_use_nemo(eq)
+@assert isequal(expand(eq - u*prod(factors)), 0)
+#=
+julia> factors
+3-element Vector{Num}:
+                                -(2//1) + x^2
+                                  -(7//1) + x
+ (3//1) + (2//1)*x + (4//1)*(x^2) + x^3 + x^4
+=#
+
+solve(factors[1], x)
+solve(factors[2], x)
+solve(factors[3], x) # hmm
+
+
+
