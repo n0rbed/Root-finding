@@ -55,19 +55,30 @@ function solve(expression, x)
         Q = ((3*a*c) - b^2)//(9a^2)
         R = (9*a*b*c - ((27*(a^2)*d)+2b^3))//(54a^3)
 
-        S = Symbolics.term(cbrt, (R + Symbolics.term(sqrt, (Q^3+R^2))))
-        T = Symbolics.term(complex, Symbolics.term(cbrt, (R - Symbolics.term(sqrt, (Q^3+R^2)))))
+        S = 0
+        T = 0
+
+        if eval(Symbolics.toexpr((Q^3+R^2))) > 0 
+            S = Symbolics.term(cbrt, (R + Symbolics.term(sqrt, (Q^3+R^2))))
+            T = Symbolics.term(cbrt, (R - Symbolics.term(sqrt, (Q^3+R^2))))
+        else
+            S = Symbolics.term(cbrt, (R + im*Symbolics.term(sqrt, -(Q^3+R^2))))
+            T = Symbolics.term(cbrt, (R - im*Symbolics.term(sqrt, -(Q^3+R^2))))
+        end
 
         root1 = S + T - (b//(3*a))
         root2 = -((S+T)//2) - (b//(3*a)) + (im*(Symbolics.term(sqrt, 3))/2)*(S-T)
         root3 = -((S+T)//2) - (b//(3*a)) - (im*(Symbolics.term(sqrt, 3))/2)*(S-T)
         
+
         # if imag.(eval(Symbolics.toexpr(root2))) == 0
         #     root2 = real.(root2)
         # end
         # if imag.(eval(Symbolics.toexpr(root3))) == 0
         #     root3 = real.(root3)
         # end
+      
+        # root1 is always real
         return [real.(root1), root2, root3]
     end
 
@@ -182,6 +193,8 @@ function solve(eqs::Vector{Num}, vars::Vector{Num})
     end
     return all_roots
 end
+    
+    
 
 # Map each variable of the given poly.
 # Can be used to transform Nemo polynomial to Symbolics expression.
@@ -235,4 +248,6 @@ julia> factors
 solve(factors[1], x)
 solve(factors[2], x)
 solve(factors[3], x) # hmm
+
+
 
