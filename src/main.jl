@@ -3,12 +3,14 @@ using Nemo
 
 coeff = Symbolics.coeff
 
-function solve_quad(expression, x)
-    coeffs, constant = polynomial_coeffs(expression, [x])
+function solve_special_quad(expression, x)
 
-    a = coeffs[x^2]
-    b = get(coeffs, x, 0)
-    c = get(coeffs, x^0, 0)
+    # to do
+"
+    a = 
+    b = 
+    c = 
+"
 
     root1 = simplify(expand((-b + Symbolics.Term(sqrt, [(b^2 - 4(a*c))])) / 2a))
     root2 = simplify(expand((-b - Symbolics.Term(sqrt, [(b^2 - 4(a*c))])) / 2a))
@@ -123,8 +125,9 @@ function solve(expression, x)
             end
         end
 
-        root1, root2 = solve_quad(y^2 + (p/2) + m + ((2m)^(1/2))*y - (q/(2*((2m)^(1/2)))), y)
-        root3, root4 = solve_quad(y^2 + (p/2) + m - ((2m)^(1/2))*y + (q/(2*((2m)^(1/2)))), y)
+        # to do
+        root1, root2 = solve_quad(y^2 + (p/2) + m + (Symbolics.term(sqrt, (2m)))y - (q/(2*((2m)^(1/2)))), y)
+        root3, root4 = solve_quad(y^2 + (p/2) + m - (Symbolics.term(sqrt, (2m)))y + (q/(2*((2m)^(1/2)))), y)
 
         arr = [root1, root2, root3, root4]
         for (i, root) in enumerate(arr)
@@ -255,7 +258,5 @@ function factor_use_nemo(poly)
     sym_factors = map(f -> Symbolics.wrap(nemo_crude_evaluate(f, nemo_to_sym)), nemo_factors)
     sym_unit, sym_factors
 end
-
 @variables x
-eq = (3//1) + (2//1)*x + (4//1)*(x^2) + x^3 + x^4
-println(solve(eq, x))
+solve((3//1) + (2//1)*x + (4//1)*(x^2) + x^3 + x^4, x)
