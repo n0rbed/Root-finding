@@ -3,19 +3,21 @@ using Nemo
 
 coeff = Symbolics.coeff
 
-function solve_special_quad(expression, x)
+function get_yroots(m, p, q)
 
     # to do
-"
-    a = 
-    b = 
-    c = 
-"
+    a = 1
+    b1 = Symbolics.term(sqrt, (2m))
+    c1 = (p//2) + m - (q//(2*Symbolics.term(sqrt, 2m)))
+    b2 = -Symbolics.term(sqrt, (2m))
+    c2 = (p//2) + m + (q//(2*Symbolics.term(sqrt, 2m)))
 
-    root1 = simplify(expand((-b + Symbolics.Term(sqrt, [(b^2 - 4(a*c))])) / 2a))
-    root2 = simplify(expand((-b - Symbolics.Term(sqrt, [(b^2 - 4(a*c))])) / 2a))
+    root1 = simplify(expand((-b1 + Symbolics.Term(sqrt, [(b1^2 - 4(a*c1))])) / 2a))
+    root2 = simplify(expand((-b1 - Symbolics.Term(sqrt, [(b1^2 - 4(a*c1))])) / 2a))
+    root3 = simplify(expand((-b2 - Symbolics.Term(sqrt, [(b2^2 - 4(a*c2))])) / 2a))
+    root4 = simplify(expand((-b2 - Symbolics.Term(sqrt, [(b2^2 - 4(a*c2))])) / 2a))
 
-    return [root1, root2]
+    return [root1, root2, root3, root4]
 end
 
 function solve(expression, x)
@@ -126,10 +128,7 @@ function solve(expression, x)
         end
 
         # to do
-        root1, root2 = solve_quad(y^2 + (p/2) + m + (Symbolics.term(sqrt, (2m)))y - (q/(2*((2m)^(1/2)))), y)
-        root3, root4 = solve_quad(y^2 + (p/2) + m - (Symbolics.term(sqrt, (2m)))y + (q/(2*((2m)^(1/2)))), y)
-
-        arr = [root1, root2, root3, root4]
+        arr = get_yroots(m, p, q)
         for (i, root) in enumerate(arr)
             arr[i] = root - (b//(4a))
         end
