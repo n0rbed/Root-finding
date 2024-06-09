@@ -104,12 +104,16 @@ function get_yroots(m, p, q)
 end
 
 function solve(expression, x)
-    if isequal(imag.(expression), 0)
-        expression = real.(expression)
+    try
         if isequal(SymbolicUtils.operation(expression.val), ^) && SymbolicUtils.arguments(expression.val)[2] isa Int64
             expression = SymbolicUtils.arguments(expression.val)[1]
         end
+    catch e
+        if !isequal(e.msg, "Sym doesn't have a operation or arguments!")
+            rethrow(e)           
+        end
     end
+    
 
     expression = expand(expression)
     expression = simplify.(expression)
@@ -160,6 +164,15 @@ function solve(expression, x)
     return arr_roots
 end
 
+# You can compute the GCD between a system of polynomials by doing the following:
+# Get the GCD between the first two polys,
+# and get the GCD between this result and the following index,
+# say: solve([x^2 - 1, x - 1, (x-1)^20], x)
+# the GCD between the first two terms is obviously x-1,
+# now we call gcd_use_nemo() on this term, and the following,
+# gcd_use_nemo(x - 1, (x-1)^20), which is again x-1.
+# now we just need to solve(x-1, x) to get the common root in this
+# system of equations.
 function solve(polys::Vector, x::Num)
     polys = unique(polys)
 
