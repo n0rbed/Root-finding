@@ -162,13 +162,24 @@ end
 
 function solve(polys::Vector, x::Num)
     polys = unique(polys)
-    expression = polys[1]
-    for i = 2:(length(polys))
-        expression = expression - polys[i]
+
+    if length(polys) < 1
+        throw("No expressions entered")
     end
-    expression = expand(expression)
-    expression = simplify.(expression)
-    return solve(expression, x)
+    if length(polys) == 1
+        return solve(polys[1], x)
+    end
+
+    gcd = gcd_use_nemo(polys[1], polys[2])
+
+    for i = 3:length(polys)
+        gcd = gcd_use_nemo(gcd, polys[i])
+    end
+    
+    if isequal(gcd, 1)
+        throw("GCD found between the expressions is 1, solve() can not solve this system of equations exactly")
+    end
+    return solve(gcd, x)
 end
 
 function contains(var, vars)
@@ -313,9 +324,3 @@ end
 # - The roots of f_1(x) = 0 are 1, -1.
 # - The roots of f_2(x) = 0 are 1, (-1 +- sqrt(3)*i)/2.
 # - The solution of f_1 = f_2 = 0 is their common root: 1.
-
-@variables x
-f1 = x^2 - 1
-f2 = x^3 - 1
-g = gcd_use_nemo(f1,f2)
-r = solve(g, x)
