@@ -38,8 +38,8 @@ function get_roots_deg3(expression, x)
         S = Symbolics.term(cbrt, (R + Symbolics.term(sqrt, (Q^3+R^2))))
         T = Symbolics.term(cbrt, (R - Symbolics.term(sqrt, (Q^3+R^2))))
     else
-        S = ((R + im*Symbolics.term(sqrt, -(Q^3+R^2))))^(1//3)
-        T = ((R - im*Symbolics.term(sqrt, -(Q^3+R^2))))^(1//3)
+        S = (Symbolics.term(complex, (R + im*Symbolics.term(sqrt, -(Q^3+R^2)))))^(1//3)
+        T = (Symbolics.term(complex, (R - im*Symbolics.term(sqrt, -(Q^3+R^2)))))^(1//3)
     end
 
 
@@ -337,3 +337,5 @@ end
 
 
 
+@variables x
+solve(x^4 +1 ,x)
