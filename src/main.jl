@@ -251,12 +251,20 @@ function nemo_crude_evaluate(poly::Nemo.MPolyRingElem, varmap)
     new_poly
 end
 
-# x^2*y + b*x*y - a*x - a*b  ->  (x*y - a)*(x + b)
-function factor_use_nemo(poly)
+# Checks that the expression is a polynomial with integer or rational
+# coefficients
+function check_polynomial(poly::Num)
     vars = Symbolics.get_variables(poly)
     distr, rem = Symbolics.polynomial_coeffs(poly, vars)
     @assert isequal(rem, 0) "Not a polynomial"
     @assert all(c -> c isa Integer || c isa Rational, collect(values(distr))) "Coefficients must be integer or rational"
+end
+
+# factor(x^2*y + b*x*y - a*x - a*b)  ->  (x*y - a)*(x + b)
+function factor_use_nemo(poly::Num)
+    check_polynomial(poly)
+    Symbolics.degree(poly) == 0 && return poly, Num[]
+    vars = Symbolics.get_variables(poly)
     nemo_ring, nemo_vars = Nemo.polynomial_ring(Nemo.QQ, map(string, vars))
     sym_to_nemo = Dict(vars .=> nemo_vars)
     nemo_to_sym = Dict(v => k for (k, v) in sym_to_nemo)
@@ -268,3 +276,46 @@ function factor_use_nemo(poly)
     sym_factors = map(f -> Symbolics.wrap(nemo_crude_evaluate(f, nemo_to_sym)), nemo_factors)
     sym_unit, sym_factors
 end
+
+# gcd(x^2 - y^2, x^3 - y^3) -> x - y
+function gcd_use_nemo(poly1::Num, poly2::Num)
+    check_polynomial(poly1)
+    check_polynomial(poly2)
+    vars1 = Symbolics.get_variables(poly1)
+    vars2 = Symbolics.get_variables(poly2)
+    vars = vcat(vars1, vars2)
+    nemo_ring, nemo_vars = Nemo.polynomial_ring(Nemo.QQ, map(string, vars))
+    sym_to_nemo = Dict(vars .=> nemo_vars)
+    nemo_to_sym = Dict(v => k for (k, v) in sym_to_nemo)
+    nemo_poly1 = Symbolics.substitute(poly1, sym_to_nemo)
+    nemo_poly2 = Symbolics.substitute(poly2, sym_to_nemo)
+    nemo_gcd = Nemo.gcd(nemo_poly1, nemo_poly2)
+    sym_gcd = Symbolics.wrap(nemo_crude_evaluate(nemo_gcd, nemo_to_sym))
+    sym_gcd
+end
+
+# NOTE:
+# We can use Gcd to solve systems of polynomial equations in 1 variable:
+#   f_1(x) = ... = f_m(x) = 0.
+#
+# The algorithm goes as follows:
+#   1. Compute g = gcd(f_1, ..., f_m).
+#   2. Solve   g = 0.
+#
+# Example. Consider the system
+#   f_1(x) = x^2 - 1,
+#   f_2(x) = x^3 - 1.
+#
+#   1. Compute g = x - 1 = gcd(x^2 - 1, x^3 - 1).
+#   2. Solve   g = 0  => x = 1.
+#
+# Therefore, 1 is the only solution. Indeed,
+# - The roots of f_1(x) = 0 are 1, -1.
+# - The roots of f_2(x) = 0 are 1, (-1 +- sqrt(3)*i)/2.
+# - The solution of f_1 = f_2 = 0 is their common root: 1.
+
+@variables x
+f1 = x^2 - 1
+f2 = x^3 - 1
+g = gcd_use_nemo(f1,f2)
+r = solve(g, x)
