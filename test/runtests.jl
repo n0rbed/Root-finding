@@ -1,6 +1,10 @@
 using RootFinding, Symbolics
 using Test
 
+function sort_roots(roots)
+    return sort(roots, lt = (x,y) -> real(x)==real(y) ? imag(x)<imag(y) : real(x)<real(y))
+end
+
 @variables x y z
 
 @test isequal(solve(x+1, x), -1)
@@ -9,15 +13,37 @@ using Test
 
 @test isequal(solve(x, x), 0) 
 
-@test isequal(solve(x^2 + 1, x), [-1, -1]) 
-
-@test isequal(solve(x^2 + 2x + 10) ,[-1 + 3im, -1 - 3im])
-
-@test isequal(solve(x^2 - 10x + 25) ,[5, 5])
-
 @test isequal(solve((x+1)^20, x), -1)
 
-@test isequal(solve(x^3 - 2x^2 + x - 2, x), [2, -im, im])
+exp = x^2 + 1
+arr_calcd_roots = sort_roots(eval.(Symbolics.toexpr.(solve(exp, x))))
+arr_known_roots = sort_roots([-im, im])
+@test isequal(arr_calcd_roots .≈ arr_known_roots, [1,1])
+
+exp = x^2 + 2x + 10
+arr_calcd_roots = sort_roots(eval.(Symbolics.toexpr.(solve(exp, x))))
+arr_known_roots = sort_roots([-1 + 3im, -1 - 3im])
+@test isequal(arr_calcd_roots .≈ arr_known_roots, [1,1])
+
+exp = x^2 - 10x + 25
+arr_calcd_roots = sort_roots(eval.(Symbolics.toexpr.(solve(exp, x))))
+arr_known_roots = [5,5]
+@test isequal(arr_calcd_roots .≈ arr_known_roots, [1,1])
+
+
+exp = x^3 - 2x^2 + x - 2 
+arr_calcd_roots = sort_roots(eval.(Symbolics.toexpr.(solve(exp, x))))
+arr_known_roots = sort_roots([2, -im, im])
+@test isequal(arr_calcd_roots .≈ arr_known_roots, [1,1,1])
+
+exp = x^4 + 1
+arr_calcd_roots = sort_roots(eval.(Symbolics.toexpr.(solve(exp, x))))
+arr_known_roots = sort_roots(eval.([-(complex(-1))^(1/4),(complex(-1))^(1/4), (complex(-1))^(3/4), -(complex(-1))^(3/4)]))
+@test isequal(arr_calcd_roots .≈ arr_known_roots, [1,1,1,1])
+
+
+
+
 
 # Factorisation #
 
@@ -36,6 +62,8 @@ u, factors = RootFinding.factor_use_nemo(f)
 f = expand((x + 1//3) * ((x*y)^2 + 2x*y + y^2) * (x - z))
 u, factors = RootFinding.factor_use_nemo(f)
 @test isequal(expand(u*prod(factors) - f), 0)
+
+
 
 # Gcd #
 

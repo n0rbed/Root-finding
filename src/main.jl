@@ -94,7 +94,7 @@ function get_yroots(m, p, q)
 
     root1 = simplify(expand((-b1 + Symbolics.Term(sqrt, [(b1^2 - 4(a*c1))])) / 2a))
     root2 = simplify(expand((-b1 - Symbolics.Term(sqrt, [(b1^2 - 4(a*c1))])) / 2a))
-    root3 = simplify(expand((-b2 - Symbolics.Term(sqrt, [(b2^2 - 4(a*c2))])) / 2a))
+    root3 = simplify(expand((-b2 + Symbolics.Term(sqrt, [(b2^2 - 4(a*c2))])) / 2a))
     root4 = simplify(expand((-b2 - Symbolics.Term(sqrt, [(b2^2 - 4(a*c2))])) / 2a))
 
     return [root1, root2, root3, root4]
@@ -334,8 +334,3 @@ end
 # - The roots of f_1(x) = 0 are 1, -1.
 # - The roots of f_2(x) = 0 are 1, (-1 +- sqrt(3)*i)/2.
 # - The solution of f_1 = f_2 = 0 is their common root: 1.
-
-
-
-@variables x
-solve(x^4 +1 ,x)
