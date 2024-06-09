@@ -31,24 +31,21 @@ function get_roots_deg3(expression, x)
     S = 0
     T = 0
 
+    # cbrt(negative real numbers) evaluates normally with symbolics
+    # while (im)^(1//3) also evaluates normally,
+    # the other cases cbrt(im) and (-real)^(1/3) do not evaluate
     if eval(Symbolics.toexpr((Q^3+R^2))) > 0 
         S = Symbolics.term(cbrt, (R + Symbolics.term(sqrt, (Q^3+R^2))))
         T = Symbolics.term(cbrt, (R - Symbolics.term(sqrt, (Q^3+R^2))))
     else
-        S = Symbolics.term(cbrt, (R + im*Symbolics.term(sqrt, -(Q^3+R^2))))
-        T = Symbolics.term(cbrt, (R - im*Symbolics.term(sqrt, -(Q^3+R^2))))
+        S = ((R + im*Symbolics.term(sqrt, -(Q^3+R^2))))^(1//3)
+        T = ((R - im*Symbolics.term(sqrt, -(Q^3+R^2))))^(1//3)
     end
+
 
     root1 = S + T - (b//(3*a))
     root2 = -((S+T)//2) - (b//(3*a)) + (im*(Symbolics.term(sqrt, 3))/2)*(S-T)
     root3 = -((S+T)//2) - (b//(3*a)) - (im*(Symbolics.term(sqrt, 3))/2)*(S-T)
-
-    # if imag.(eval(Symbolics.toexpr(root2))) == 0
-    #     root2 = real.(root2)
-    # end
-    # if imag.(eval(Symbolics.toexpr(root3))) == 0
-    #     root3 = real.(root3)
-    # end
 
     return [root1, root2, root3]
 end
@@ -215,7 +212,7 @@ function solve(eqs::Vector{Num}, vars::Vector{Num})
     end
 
 
-    #get roots for first var (z in this case)
+    # get roots for first var (z in this case)
     solved = false
     while !solved
         # first, solve any single variable equations
@@ -337,3 +334,6 @@ end
 # - The roots of f_1(x) = 0 are 1, -1.
 # - The roots of f_2(x) = 0 are 1, (-1 +- sqrt(3)*i)/2.
 # - The solution of f_1 = f_2 = 0 is their common root: 1.
+
+
+
