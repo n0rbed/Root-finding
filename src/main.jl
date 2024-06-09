@@ -3,9 +3,92 @@ using Nemo
 
 coeff = Symbolics.coeff
 
-function get_yroots(m, p, q)
+function get_roots_deg2(expression, x)
+    # ax^2 + bx + c = 0
+    coeffs, constant = polynomial_coeffs(expression, [x])
 
-    # to do
+    a = rationalize(coeffs[x^2])
+    b = rationalize(get(coeffs, x, 0))
+    c = rationalize(get(coeffs, x^0, 0))
+
+    root1 = simplify(expand((-b + Symbolics.Term(sqrt, [(b^2 - 4(a*c))])) / 2a))
+    root2 = simplify(expand((-b - Symbolics.Term(sqrt, [(b^2 - 4(a*c))])) / 2a))
+
+    return [root1, root2]
+end
+
+function get_roots_deg3(expression, x)
+    coeffs, constant = polynomial_coeffs(expression, [x])
+
+    a = rationalize(coeffs[x^3])
+    b = rationalize(get(coeffs, x^2, 0))
+    c = rationalize(get(coeffs, x, 0))
+    d = rationalize(get(coeffs, x^0, 0))
+
+    Q = ((3*a*c) - b^2)//(9a^2)
+    R = (9*a*b*c - ((27*(a^2)*d)+2b^3))//(54a^3)
+
+    S = 0
+    T = 0
+
+    if eval(Symbolics.toexpr((Q^3+R^2))) > 0 
+        S = Symbolics.term(cbrt, (R + Symbolics.term(sqrt, (Q^3+R^2))))
+        T = Symbolics.term(cbrt, (R - Symbolics.term(sqrt, (Q^3+R^2))))
+    else
+        S = Symbolics.term(cbrt, (R + im*Symbolics.term(sqrt, -(Q^3+R^2))))
+        T = Symbolics.term(cbrt, (R - im*Symbolics.term(sqrt, -(Q^3+R^2))))
+    end
+
+    root1 = S + T - (b//(3*a))
+    root2 = -((S+T)//2) - (b//(3*a)) + (im*(Symbolics.term(sqrt, 3))/2)*(S-T)
+    root3 = -((S+T)//2) - (b//(3*a)) - (im*(Symbolics.term(sqrt, 3))/2)*(S-T)
+
+    # if imag.(eval(Symbolics.toexpr(root2))) == 0
+    #     root2 = real.(root2)
+    # end
+    # if imag.(eval(Symbolics.toexpr(root3))) == 0
+    #     root3 = real.(root3)
+    # end
+
+    return [root1, root2, root3]
+end
+
+
+function get_roots_deg4(expression, x)
+    coeffs, constant = polynomial_coeffs(expression, [x])
+
+    a = rationalize(coeffs[x^4])
+    b = rationalize(get(coeffs, x^3, 0))
+    c = rationalize(get(coeffs, x^2, 0))
+    d = rationalize(get(coeffs, x, 0))
+    e = rationalize(get(coeffs, x^0, 0))
+
+    p = (8(a*c)-3(b^2))//(8(a^2))
+
+    q = (b^3 - 4(a*b*c) + 8(d*a^2))//(8*a^3)
+
+    r = (-3(b^4) + 256(e*a^3) - 64(d*b*a^2) + 16(c*(b^2)*a))//(256*a^4)
+
+    @variables m y
+    eq_m = 8m^3 + 8(p)*m^2 + (2(p^2) - 8r)m - q^2
+    roots_m = solve(eq_m, m)
+    m = 0
+    for root in roots_m
+        if !isequal(root, 0)
+            m = root
+            break
+        end
+    end
+
+    arr = get_yroots(m, p, q)
+    for (i, root) in enumerate(arr)
+        arr[i] = root - (b//(4a))
+    end
+
+    return arr
+end
+
+function get_yroots(m, p, q)
     a = 1
     b1 = Symbolics.term(sqrt, (2m))
     c1 = (p//2) + m - (q//(2*Symbolics.term(sqrt, 2m)))
@@ -49,94 +132,23 @@ function solve(expression, x)
     end
 
     if degree == 2
-        # ax^2 + bx + c
-        coeffs, constant = polynomial_coeffs(expression, [x])
-
-        a = rationalize(coeffs[x^2])
-        b = rationalize(get(coeffs, x, 0))
-        c = rationalize(get(coeffs, x^0, 0))
-
-        root1 = simplify(expand((-b + Symbolics.Term(sqrt, [(b^2 - 4(a*c))])) / 2a))
-        root2 = simplify(expand((-b - Symbolics.Term(sqrt, [(b^2 - 4(a*c))])) / 2a))
-
-        return [root1, root2]
+        return get_roots_deg2(expression, x)
     end
 
     if degree == 3
-        coeffs, constant = polynomial_coeffs(expression, [x])
-
-        a = rationalize(coeffs[x^3])
-        b = rationalize(get(coeffs, x^2, 0))
-        c = rationalize(get(coeffs, x, 0))
-        d = rationalize(get(coeffs, x^0, 0))
-
-        Q = ((3*a*c) - b^2)//(9a^2)
-        R = (9*a*b*c - ((27*(a^2)*d)+2b^3))//(54a^3)
-
-        S = 0
-        T = 0
-
-        if eval(Symbolics.toexpr((Q^3+R^2))) > 0 
-            S = Symbolics.term(cbrt, (R + Symbolics.term(sqrt, (Q^3+R^2))))
-            T = Symbolics.term(cbrt, (R - Symbolics.term(sqrt, (Q^3+R^2))))
-        else
-            S = Symbolics.term(cbrt, (R + im*Symbolics.term(sqrt, -(Q^3+R^2))))
-            T = Symbolics.term(cbrt, (R - im*Symbolics.term(sqrt, -(Q^3+R^2))))
-        end
-
-        root1 = S + T - (b//(3*a))
-        root2 = -((S+T)//2) - (b//(3*a)) + (im*(Symbolics.term(sqrt, 3))/2)*(S-T)
-        root3 = -((S+T)//2) - (b//(3*a)) - (im*(Symbolics.term(sqrt, 3))/2)*(S-T)
-        
-
-        # if imag.(eval(Symbolics.toexpr(root2))) == 0
-        #     root2 = real.(root2)
-        # end
-        # if imag.(eval(Symbolics.toexpr(root3))) == 0
-        #     root3 = real.(root3)
-        # end
-      
-        # root1 is always real
-        return [root1, root2, root3]
+        return get_roots_deg3(expression, x)
     end
 
     if degree == 4
-
-        coeffs, constant = polynomial_coeffs(expression, [x])
-
-        a = rationalize(coeffs[x^4])
-        b = rationalize(get(coeffs, x^3, 0))
-        c = rationalize(get(coeffs, x^2, 0))
-        d = rationalize(get(coeffs, x, 0))
-        e = rationalize(get(coeffs, x^0, 0))
-
-        p = (8(a*c)-3(b^2))//(8(a^2))
-
-        q = (b^3 - 4(a*b*c) + 8(d*a^2))//(8*a^3)
-
-        r = (-3(b^4) + 256(e*a^3) - 64(d*b*a^2) + 16(c*(b^2)*a))//(256*a^4)
-
-        @variables m y
-        eq_m = 8m^3 + 8(p)*m^2 + (2(p^2) - 8r)m - q^2
-        roots_m = solve(eq_m, m)
-        m = 0
-        for root in roots_m
-            if !isequal(root, 0)
-                m = root
-                break
-            end
-        end
-
-        # to do
-        arr = get_yroots(m, p, q)
-        for (i, root) in enumerate(arr)
-            arr[i] = root - (b//(4a))
-        end
-
-        return arr
+        return get_roots_deg4(expression, x)
     end
 
     u, factors = factor_use_nemo(expression)
+
+    if length(factors) == 1
+        throw("This expression does not have an exact solution, use a numerical method instead.")
+    end
+
     @assert isequal(expand(expression - u*prod(factors)), 0)
 
     arr_roots = []
@@ -219,7 +231,6 @@ function solve(eqs::Vector{Num}, vars::Vector{Num})
     end
     return all_roots
 end
-    
     
 
 # Map each variable of the given poly.
