@@ -11,8 +11,8 @@ function get_roots_deg2(expression, x)
     b = rationalize(get(coeffs, x, 0))
     c = rationalize(get(coeffs, x^0, 0))
 
-    root1 = simplify(expand((-b + Symbolics.Term(sqrt, [(b^2 - 4(a*c))])) / 2a))
-    root2 = simplify(expand((-b - Symbolics.Term(sqrt, [(b^2 - 4(a*c))])) / 2a))
+    root1 = simplify(expand((-b + Symbolics.term(sqrt, Symbolics.term(complex, (b^2 - 4(a*c))))) / 2a))
+    root2 = simplify(expand((-b - Symbolics.term(sqrt, Symbolics.term(complex, (b^2 - 4(a*c))))) / 2a))
 
     return [root1, root2]
 end
