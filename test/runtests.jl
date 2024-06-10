@@ -42,8 +42,15 @@ arr_known_roots = sort_roots(eval.([-(complex(-1))^(1/4),(complex(-1))^(1/4), (c
 @test isequal(arr_calcd_roots .≈ arr_known_roots, [1,1,1,1])
 
 
+# Alex:
 
+# solve returns evaluated sqrt(2)
+# expr = x - Symbolics.term(sqrt, 2)
+# @test solve(expr, x) == Symbolics.term(sqrt, 2)
 
+# solve errors
+# expr = x + im
+# @test solve(expr, x) == -im
 
 # Factorisation #
 
