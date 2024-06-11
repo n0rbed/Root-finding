@@ -11,8 +11,8 @@ function get_roots_deg2(expression, x)
     b = rationalize(get(coeffs, x, 0))
     c = rationalize(get(coeffs, x^0, 0))
 
-    root1 = simplify(expand((-b + Symbolics.term(sqrt, Symbolics.term(complex, (b^2 - 4(a*c))))) / 2a))
-    root2 = simplify(expand((-b - Symbolics.term(sqrt, Symbolics.term(complex, (b^2 - 4(a*c))))) / 2a))
+    root1 = simplify((-b + Symbolics.term(sqrt, Symbolics.term(complex, (b^2 - 4(a*c))))) / 2a)
+    root2 = simplify((-b - Symbolics.term(sqrt, Symbolics.term(complex, (b^2 - 4(a*c))))) / 2a)
 
     return [root1, root2]
 end
@@ -87,40 +87,26 @@ end
 
 function get_yroots(m, p, q)
     a = 1
-    b1 = Symbolics.term(sqrt, (2m))
-    c1 = (p//2) + m - (q//(2*Symbolics.term(sqrt, 2m)))
-    b2 = -Symbolics.term(sqrt, (2m))
-    c2 = (p//2) + m + (q//(2*Symbolics.term(sqrt, 2m)))
+    b1 = Symbolics.term(sqrt, Symbolics.term(complex, 2m))
+    c1 = (p//2) + m - (q//(2*Symbolics.term(sqrt, Symbolics.term(complex, 2m))))
+    b2 = -Symbolics.term(sqrt, Symbolics.term(complex, 2m))
+    c2 = (p//2) + m + (q//(2*Symbolics.term(sqrt, Symbolics.term(complex, 2m))))
 
-    root1 = simplify(expand((-b1 + Symbolics.Term(sqrt, [(b1^2 - 4(a*c1))])) / 2a))
-    root2 = simplify(expand((-b1 - Symbolics.Term(sqrt, [(b1^2 - 4(a*c1))])) / 2a))
-    root3 = simplify(expand((-b2 + Symbolics.Term(sqrt, [(b2^2 - 4(a*c2))])) / 2a))
-    root4 = simplify(expand((-b2 - Symbolics.Term(sqrt, [(b2^2 - 4(a*c2))])) / 2a))
+    root1 = simplify((-b1 + Symbolics.term(sqrt, Symbolics.term(complex, (b1^2 - 4(a*c1))))) / 2a)
+    root2 = simplify((-b1 - Symbolics.term(sqrt, Symbolics.term(complex, (b1^2 - 4(a*c1))))) / 2a)
+    root3 = simplify((-b2 + Symbolics.term(sqrt, Symbolics.term(complex, (b2^2 - 4(a*c2))))) / 2a)
+    root4 = simplify((-b2 - Symbolics.term(sqrt, Symbolics.term(complex, (b2^2 - 4(a*c2))))) / 2a)
 
     return [root1, root2, root3, root4]
 end
 
-function solve(expression, x)
-    try
-        if isequal(SymbolicUtils.operation(expression.val), ^) && SymbolicUtils.arguments(expression.val)[2] isa Int64
-            expression = SymbolicUtils.arguments(expression.val)[1]
-        end
-    catch e
-        if !isequal(e.msg, "Sym doesn't have a operation or arguments!")
-            rethrow(e)           
-        end
-    end
-    
-
-    expression = expand(expression)
-    expression = simplify.(expression)
+function get_roots(expression, x)
     degree = Symbolics.degree(expression, x)
-
 
     if degree == 0 && expression == 0
         return 0
     elseif degree == 0 && expression != 0
-        return "Not a valid statement"
+        throw("Not a valid statement")
     end
 
     if degree == 1
@@ -128,7 +114,7 @@ function solve(expression, x)
         coeffs, constant = polynomial_coeffs(expression, [x])
         m = rationalize(get(coeffs, x, 0))
         c = rationalize(get(coeffs, x^0, 0))
-        root = -c / m
+        root = -c // m
         return root
     end
 
@@ -144,18 +130,40 @@ function solve(expression, x)
         return get_roots_deg4(expression, x)
     end
 
-    u, factors = factor_use_nemo(expression)
+end
 
-    if length(factors) == 1
-        throw("This expression does not have an exact solution, use a numerical method instead.")
+function solve(expression, x)
+    try
+        if isequal(SymbolicUtils.operation(expression.val), ^) && SymbolicUtils.arguments(expression.val)[2] isa Int64
+            expression = Symbolics.wrap(SymbolicUtils.arguments(expression.val)[1])
+        end
+    catch e
     end
+    
 
-    @assert isequal(expand(expression - u*prod(factors)), 0)
+    expression = expand(expression)
+    expression = simplify.(expression)
+    degree = Symbolics.degree(expression, x)
+
+    u, factors = factor_use_nemo(expression)
 
     arr_roots = []
 
-    for factor in factors
-        append!(arr_roots, solve(factor, x))
+    if degree < 5 && length(factors) == 1
+        return get_roots(expression, x)
+    end
+
+    if length(factors) != 1
+        @assert isequal(expand(expression - u*prod(factors)), 0)
+
+        for factor in factors
+            append!(arr_roots, solve(factor, x))
+        end
+    end
+
+
+    if isequal(arr_roots, [])
+        throw("This expression does not have an exact solution, use a numerical method instead.")
     end
 
     return arr_roots
@@ -334,3 +342,8 @@ end
 # - The roots of f_1(x) = 0 are 1, -1.
 # - The roots of f_2(x) = 0 are 1, (-1 +- sqrt(3)*i)/2.
 # - The solution of f_1 = f_2 = 0 is their common root: 1.
+
+
+
+#@variables x
+#solve(x^4 + 1, x)
