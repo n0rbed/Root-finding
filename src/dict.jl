@@ -225,101 +225,65 @@ function contains(var, vars)
     return false
 end
 
-function add_sol(solutions, new_sols, var, index)
-    sol_used = solutions[index]
-    deleteat!(solutions, index)
-    for new_sol in new_sols
-        sol_used[var] = new_sol
-        push!(solutions, deepcopy(sol_used))
-    end
-    return solutions
-end
-
-function add_sol_to_all(solutions, new_sols, var)
-    existing_solutions = deepcopy(solutions)
-    solutions = []
-    for new_sol in new_sols
-        copy_sol = deepcopy(existing_solutions)
-        for i = 1:length(copy_sol)
-            copy_sol[i][var] = new_sol
-        end
-        append!(solutions, copy_sol)
-    end
-    return solutions
-end
 
 function solve(eqs::Vector{Num}, vars::Vector{Num})
     eqs = convert(Vector{Any}, Symbolics.groebner_basis(eqs, ordering=Lex(vars)))
 
-    solutions = []
+    all_roots = Dict()
 
-    # handle "unsolvable" cases
+    # initialize the place of each var
+    for var in vars
+        all_roots[var] = [] 
+    end
+
     if isequal(1, eqs[1])
-        return solutions
+        return all_roots
     end
 
-    if length(eqs) < length(vars)
-        throw("Infinite number of solutions")
-    end
-
-    # first, solve any single variable equations
-    i = 1
-    while !(i > length(eqs))
-            present_vars = Symbolics.get_variables(eqs[i])
-        for var in vars
-            if size(present_vars, 1) == 1 && isequal(var, present_vars[1])
-                new_sols = solve(Symbolics.wrap(eqs[i]), var)
-
-                if length(solutions) == 0
-                    append!(solutions, [Dict(var => sol) for sol in new_sols])
-                else
-                    solutions = add_sol_to_all(solutions, new_sols, var)
+    # get roots for first var 
+    solved = false
+    while !solved
+        # first, solve any single variable equations
+        for (i, eq) in enumerate(eqs)
+            for var in vars
+                present_vars = Symbolics.get_variables(eq)
+                if size(present_vars, 1) == 1 && isequal(var, present_vars[1])
+                    append!(all_roots[var], solve(Symbolics.wrap(eq), var))
+                    deleteat!(eqs, i)
+                    i = i - 1
                 end
-
-                deleteat!(eqs, i)
-                i = i - 1
-                break
             end
         end
-        i = i + 1
-    end
 
-    # second, iterate over eqs and sub each found solution
-    # then add the roots of the remaining unknown variables 
-    j = 1
-    for eq in eqs
-        solved = false
-        present_vars = Symbolics.get_variables(eq)
-        size_of_sub = length(solutions[1])
 
-        if size(present_vars, 1) == (size_of_sub + 1)
-            while !solved 
-                subbed_eq = eq
-                for (var, root) in solutions[1]
-                    subbed_eq = substitute(subbed_eq, Dict([var => root]))
+        # second, Substitute the roots of the variables where found
+        i = 1
+        while !(i > length(eqs))
+            for var in vars
+                present_vars = Symbolics.get_variables(eqs[i])
+
+                if contains(var, present_vars) && !isequal(all_roots[var], [])
+                    eq = eqs[i]
+                    deleteat!(eqs, i)
+
+                    for root in all_roots[var]
+                        insert!(eqs, i, substitute(eq, Dict([var => root])))
+                    end
+                    i = i - 1 + length(all_roots[var])
                 end
-                subbed_eq = Symbolics.wrap(subbed_eq)
+            end
+            i = i + 1
+        end
 
-                if isequal(subbed_eq, 0)
-                    # this is my assumption for which an equation is redundant (most likely wrong)
-                    # i think its redundant if the equation is divisible by something
-                    # i.e. simplifiable, not sure how to describe this as code though. 
-                    break
-                end
 
-                var_tosolve = Symbolics.get_variables(subbed_eq)[1]
-                new_var_sols = solve(subbed_eq, var_tosolve)
-                solutions = add_sol(solutions, new_var_sols, var_tosolve, 1)
-
-                solved = all(x -> length(x) == j+1, solutions)
+        solved = true
+        for (var, value) in all_roots
+            if isequal(value, [])
+                solved = false
             end
         end
-        if solved
-            j = j + 1
-        end
     end
-
-    return solutions
+    return all_roots
 end
     
 
