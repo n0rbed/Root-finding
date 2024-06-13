@@ -11,8 +11,13 @@ function get_roots_deg2(expression, x)
     b = rationalize(get(coeffs, x, 0))
     c = rationalize(get(coeffs, x^0, 0))
 
-    root1 = simplify(expand((-b + Symbolics.term(sqrt, Symbolics.term(complex, (b^2 - 4(a*c))))) / 2a))
-    root2 = simplify(expand((-b - Symbolics.term(sqrt, Symbolics.term(complex, (b^2 - 4(a*c))))) / 2a))
+
+    root1 = simplify((-b + Symbolics.term(sqrt, (b^2 - 4(a*c)))) / 2a)
+    root2 = simplify((-b - Symbolics.term(sqrt, (b^2 - 4(a*c)))) / 2a)
+    if eval(Symbolics.toexpr(b^2 - 4(a*c))) < 0
+        root1 = simplify((-b + Symbolics.term(sqrt, Symbolics.term(complex, (b^2 - 4(a*c))))) / 2a)
+        root2 = simplify((-b - Symbolics.term(sqrt, Symbolics.term(complex, (b^2 - 4(a*c))))) / 2a)
+    end
 
     return [root1, root2]
 end
@@ -87,40 +92,36 @@ end
 
 function get_yroots(m, p, q)
     a = 1
-    b1 = Symbolics.term(sqrt, (2m))
-    c1 = (p//2) + m - (q//(2*Symbolics.term(sqrt, 2m)))
-    b2 = -Symbolics.term(sqrt, (2m))
-    c2 = (p//2) + m + (q//(2*Symbolics.term(sqrt, 2m)))
+    b1 = Symbolics.term(sqrt, Symbolics.term(complex, 2m))
+    c1 = (p//2) + m - (q//(2*Symbolics.term(sqrt, Symbolics.term(complex, 2m))))
+    b2 = -Symbolics.term(sqrt, Symbolics.term(complex, 2m))
+    c2 = (p//2) + m + (q//(2*Symbolics.term(sqrt, Symbolics.term(complex, 2m))))
 
-    root1 = simplify(expand((-b1 + Symbolics.Term(sqrt, [(b1^2 - 4(a*c1))])) / 2a))
-    root2 = simplify(expand((-b1 - Symbolics.Term(sqrt, [(b1^2 - 4(a*c1))])) / 2a))
-    root3 = simplify(expand((-b2 + Symbolics.Term(sqrt, [(b2^2 - 4(a*c2))])) / 2a))
-    root4 = simplify(expand((-b2 - Symbolics.Term(sqrt, [(b2^2 - 4(a*c2))])) / 2a))
+    root1 = simplify((-b1 + Symbolics.term(sqrt, (b1^2 - 4(a*c1)))) / 2a)
+    root2 = simplify((-b1 - Symbolics.term(sqrt, (b1^2 - 4(a*c1)))) / 2a)
+    if eval(Symbolics.toexpr(b1^2 - 4(a*c1))) < 0
+        root1 = simplify((-b1 + Symbolics.term(sqrt, Symbolics.term(complex, (b1^2 - 4(a*c1))))) / 2a)
+        root2 = simplify((-b1 - Symbolics.term(sqrt, Symbolics.term(complex, (b1^2 - 4(a*c1))))) / 2a)
+    end
+
+
+    root3 = simplify((-b2 + Symbolics.term(sqrt, (b2^2 - 4(a*c2)))) / 2a)
+    root4 = simplify((-b2 - Symbolics.term(sqrt, (b2^2 - 4(a*c2)))) / 2a)
+    if eval(Symbolics.toexpr(b2^2 - 4(a*c2))) < 0
+        root3 = simplify((-b2 + Symbolics.term(sqrt, Symbolics.term(complex, (b2^2 - 4(a*c2))))) / 2a)
+        root4 = simplify((-b2 - Symbolics.term(sqrt, Symbolics.term(complex, (b2^2 - 4(a*c2))))) / 2a)
+    end
 
     return [root1, root2, root3, root4]
 end
 
-function solve(expression, x)
-    try
-        if isequal(SymbolicUtils.operation(expression.val), ^) && SymbolicUtils.arguments(expression.val)[2] isa Int64
-            expression = SymbolicUtils.arguments(expression.val)[1]
-        end
-    catch e
-        if !isequal(e.msg, "Sym doesn't have a operation or arguments!")
-            rethrow(e)           
-        end
-    end
-    
-
-    expression = expand(expression)
-    expression = simplify.(expression)
+function get_roots(expression, x)
     degree = Symbolics.degree(expression, x)
-
 
     if degree == 0 && expression == 0
         return 0
     elseif degree == 0 && expression != 0
-        return "Not a valid statement"
+        throw("Not a valid statement")
     end
 
     if degree == 1
@@ -128,7 +129,7 @@ function solve(expression, x)
         coeffs, constant = polynomial_coeffs(expression, [x])
         m = rationalize(get(coeffs, x, 0))
         c = rationalize(get(coeffs, x^0, 0))
-        root = -c / m
+        root = -c // m
         return root
     end
 
@@ -144,18 +145,40 @@ function solve(expression, x)
         return get_roots_deg4(expression, x)
     end
 
-    u, factors = factor_use_nemo(expression)
+end
 
-    if length(factors) == 1
-        throw("This expression does not have an exact solution, use a numerical method instead.")
+function solve(expression, x)
+    try
+        if isequal(SymbolicUtils.operation(expression.val), ^) && SymbolicUtils.arguments(expression.val)[2] isa Int64
+            expression = Symbolics.wrap(SymbolicUtils.arguments(expression.val)[1])
+        end
+    catch e
     end
+    
 
-    @assert isequal(expand(expression - u*prod(factors)), 0)
+    expression = expand(expression)
+    expression = simplify.(expression)
+    degree = Symbolics.degree(expression, x)
+
+    u, factors = factor_use_nemo(expression)
 
     arr_roots = []
 
-    for factor in factors
-        append!(arr_roots, solve(factor, x))
+    if degree < 5 && length(factors) == 1
+        return get_roots(expression, x)
+    end
+
+    if length(factors) != 1
+        @assert isequal(expand(expression - u*expand(prod(factors))), 0)
+
+        for factor in factors
+            append!(arr_roots, solve(factor, x))
+        end
+    end
+
+
+    if isequal(arr_roots, [])
+        throw("This expression does not have an exact solution, use a numerical method instead.")
     end
 
     return arr_roots
@@ -203,7 +226,11 @@ end
 
 
 function solve(eqs::Vector{Num}, vars::Vector{Num})
-    eqs = convert(Vector{Any}, Symbolics.groebner_basis(eqs))
+    eqs = convert(Vector{Any}, Symbolics.groebner_basis(eqs, ordering=Lex(vars)))
+    if isequal(1, eqs[1])
+        throw("System not solvable.")
+    end
+
     all_roots = Dict()
 
     # initialize the place of each var
@@ -212,34 +239,39 @@ function solve(eqs::Vector{Num}, vars::Vector{Num})
     end
 
 
-    # get roots for first var (z in this case)
+    # get roots for first var 
     solved = false
     while !solved
         # first, solve any single variable equations
-        for eq in eqs
+        for (i, eq) in enumerate(eqs)
             for var in vars
                 present_vars = Symbolics.get_variables(eq)
-                if contains(var, present_vars) && size(present_vars, 1) == 1 
-                    var = Symbolics.get_variables(eq)[1]
+                if size(present_vars, 1) == 1 && isequal(var, present_vars[1])
                     append!(all_roots[var], solve(Symbolics.wrap(eq), var))
+                    deleteat!(eqs, i)
+                    i = i - 1
                 end
             end
         end
 
+
         # second, Substitute the roots of the variables where found
-        for (i, eq) in pairs(eqs)
+        i = 1
+        while !(i > length(eqs))
             for var in vars
-                present_vars = Symbolics.get_variables(eq)
+                present_vars = Symbolics.get_variables(eqs[i])
 
                 if contains(var, present_vars) && !isequal(all_roots[var], [])
+                    eq = eqs[i]
                     deleteat!(eqs, i)
 
                     for root in all_roots[var]
                         insert!(eqs, i, substitute(eq, Dict([var => root])))
                     end
-
+                    i = i - 1 + length(all_roots[var])
                 end
             end
+            i = i + 1
         end
 
 
@@ -295,7 +327,12 @@ function factor_use_nemo(poly::Num)
     nemo_factors = collect(keys(nemo_fac.fac)) # TODO: do not forget multiplicities
     sym_unit = Rational(Nemo.coeff(nemo_unit, 1))
     sym_factors = map(f -> Symbolics.wrap(nemo_crude_evaluate(f, nemo_to_sym)), nemo_factors)
-    sym_unit, sym_factors
+
+    for (i, fac) in enumerate(sym_factors)
+        sym_factors[i] = fac^(collect(values(nemo_fac.fac))[i])
+    end
+
+    return sym_unit, sym_factors
 end
 
 # gcd(x^2 - y^2, x^3 - y^3) -> x - y
@@ -312,7 +349,7 @@ function gcd_use_nemo(poly1::Num, poly2::Num)
     nemo_poly2 = Symbolics.substitute(poly2, sym_to_nemo)
     nemo_gcd = Nemo.gcd(nemo_poly1, nemo_poly2)
     sym_gcd = Symbolics.wrap(nemo_crude_evaluate(nemo_gcd, nemo_to_sym))
-    sym_gcd
+    return sym_gcd
 end
 
 # NOTE:
@@ -334,3 +371,6 @@ end
 # - The roots of f_1(x) = 0 are 1, -1.
 # - The roots of f_2(x) = 0 are 1, (-1 +- sqrt(3)*i)/2.
 # - The solution of f_1 = f_2 = 0 is their common root: 1.
+@variables x y z
+eqs = [x^2 + y + z - 1, x + y^2 + z - 1, x + y + z^2 - 1]
+solve(eqs, [x,y,z])
