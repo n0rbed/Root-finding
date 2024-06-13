@@ -210,7 +210,8 @@ function solve(polys::Vector, x::Num)
     end
     
     if isequal(gcd, 1)
-        throw("GCD found between the expressions is 1, solve() can not solve this system of equations exactly")
+        @info "Nemo gcd is 1."
+        return []
     end
     return solve(gcd, x)
 end
@@ -224,65 +225,86 @@ function contains(var, vars)
     return false
 end
 
+function add_sol(solutions, new_sols, var, index)
+    sol_used = solutions[index]
+    deleteat!(solutions, index)
+    for new_sol in new_sols
+        sol_used[var] = new_sol
+        push!(solutions, deepcopy(sol_used))
+    end
+    return solutions
+end
+
+function add_sol_to_all(solutions, new_sols, var)
+    existing_solutions = deepcopy(solutions)
+    solutions = []
+    for new_sol in new_sols
+        copy_sol = deepcopy(existing_solutions)
+        for i = 1:length(copy_sol)
+            copy_sol[i][var] = new_sol
+        end
+        append!(solutions, copy_sol)
+    end
+    return solutions
+end
 
 function solve(eqs::Vector{Num}, vars::Vector{Num})
     eqs = convert(Vector{Any}, Symbolics.groebner_basis(eqs, ordering=Lex(vars)))
 
-    all_roots = Dict()
+    solutions = []
 
-    # initialize the place of each var
-    for var in vars
-        all_roots[var] = [] 
-    end
-
+    # handle "unsolvable" cases
     if isequal(1, eqs[1])
-        return all_roots
+        return solutions
     end
 
-    # get roots for first var 
+    if length(eqs) < length(vars)
+        throw("Infinite number of solutions")
+    end
+
+    # first, solve any single variable equations
+    i = 1
+    while !(i > length(eqs))
+            present_vars = Symbolics.get_variables(eqs[i])
+        for var in vars
+            if size(present_vars, 1) == 1 && isequal(var, present_vars[1])
+                new_sols = solve(Symbolics.wrap(eqs[i]), var)
+
+                if length(solutions) == 0
+                    append!(solutions, [Dict(var => sol) for sol in new_sols])
+                else
+                    solutions = add_sol_to_all(solutions, new_sols, var)
+                end
+
+                deleteat!(eqs, i)
+                i = i - 1
+                break
+            end
+        end
+        i = i + 1
+    end
+
+    # second, iterate over eqs and sub each found solution
+    # then add the roots of the remaining unknown variables 
     solved = false
-    while !solved
-        # first, solve any single variable equations
-        for (i, eq) in enumerate(eqs)
-            for var in vars
-                present_vars = Symbolics.get_variables(eq)
-                if size(present_vars, 1) == 1 && isequal(var, present_vars[1])
-                    append!(all_roots[var], solve(Symbolics.wrap(eq), var))
-                    deleteat!(eqs, i)
-                    i = i - 1
+    while !solved 
+        size_of_sub = length(solutions[1])
+        for eq in eqs
+            present_vars = Symbolics.get_variables(eq)
+            if size(present_vars, 1) == (size_of_sub + 1)
+                for (var, root) in solutions[1]
+                    eq = substitute(eq, Dict([var => root]))
                 end
+                eq = Symbolics.wrap(eq)
+                var_tosolve = Symbolics.get_variables(eq)[1]
+                new_var_sols = solve(eq, var_tosolve)
+                solutions = add_sol(solutions, new_var_sols, var_tosolve, 1)
             end
         end
-
-
-        # second, Substitute the roots of the variables where found
-        i = 1
-        while !(i > length(eqs))
-            for var in vars
-                present_vars = Symbolics.get_variables(eqs[i])
-
-                if contains(var, present_vars) && !isequal(all_roots[var], [])
-                    eq = eqs[i]
-                    deleteat!(eqs, i)
-
-                    for root in all_roots[var]
-                        insert!(eqs, i, substitute(eq, Dict([var => root])))
-                    end
-                    i = i - 1 + length(all_roots[var])
-                end
-            end
-            i = i + 1
-        end
-
-
-        solved = true
-        for (var, value) in all_roots
-            if isequal(value, [])
-                solved = false
-            end
-        end
+        solved = all(x -> length(x) == length(vars), solutions)
     end
-    return all_roots
+
+    return solutions
 end
     
 
@@ -371,6 +393,3 @@ end
 # - The roots of f_1(x) = 0 are 1, -1.
 # - The roots of f_2(x) = 0 are 1, (-1 +- sqrt(3)*i)/2.
 # - The solution of f_1 = f_2 = 0 is their common root: 1.
-@variables x y z
-eqs = [x^2 + y + z - 1, x + y^2 + z - 1, x + y + z^2 - 1]
-solve(eqs, [x,y,z])
