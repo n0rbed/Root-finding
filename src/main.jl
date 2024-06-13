@@ -227,9 +227,6 @@ end
 
 function solve(eqs::Vector{Num}, vars::Vector{Num})
     eqs = convert(Vector{Any}, Symbolics.groebner_basis(eqs, ordering=Lex(vars)))
-    if isequal(1, eqs[1])
-        throw("System not solvable.")
-    end
 
     all_roots = Dict()
 
@@ -238,6 +235,9 @@ function solve(eqs::Vector{Num}, vars::Vector{Num})
         all_roots[var] = [] 
     end
 
+    if isequal(1, eqs[1])
+        return all_roots
+    end
 
     # get roots for first var 
     solved = false
