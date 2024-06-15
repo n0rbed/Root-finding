@@ -13,6 +13,7 @@ function filter_poly(expr)
             var = Symbolics.variables("c"*string(i))[1]
             subs[var] = arg
             args[i] = var
+            continue
         end
 
         # handle "x" as an argument
@@ -33,5 +34,4 @@ function filter_poly(expr)
     return (subs, expr)
 end
 @variables x
-expr = Symbolics.term(sqrt, Symbolics.term(complex, -4//1))
-filter_poly(x + expr*x^2)
+filter_poly(x^2 - (Symbolics.term(sqrt, 8))^2)
