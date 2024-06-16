@@ -10,11 +10,19 @@ function get_roots_deg2(expression, x)
     c = (get(coeffs, x^0, 0))
 
 
-    root1 = simplify((-b + Symbolics.term(sqrt, (b^2 - 4(a*c)))) / 2a)
-    root2 = simplify((-b - Symbolics.term(sqrt, (b^2 - 4(a*c)))) / 2a)
-    if eval(Symbolics.toexpr(b^2 - 4(a*c))) < 0
-        root1 = simplify((-b + Symbolics.term(sqrt, Symbolics.term(complex, (b^2 - 4(a*c))))) / 2a)
-        root2 = simplify((-b - Symbolics.term(sqrt, Symbolics.term(complex, (b^2 - 4(a*c))))) / 2a)
+    root1 = simplify((-b + Symbolics.term(sqrt, (b^2 - 4(a*c)))) // 2a)
+    root2 = simplify((-b - Symbolics.term(sqrt, (b^2 - 4(a*c)))) // 2a)
+    try
+        if eval(Symbolics.toexpr(b^2 - 4(a*c))) < 0
+            root1 = simplify((-b + Symbolics.term(sqrt, Symbolics.term(complex, (b^2 - 4(a*c))))) // 2a)
+            root2 = simplify((-b - Symbolics.term(sqrt, Symbolics.term(complex, (b^2 - 4(a*c))))) // 2a)
+        end
+    catch e
+        if typeof(e) == UndefVarError
+            println("Roots: ", root1, " and ", root2, " assume that ", b^2 - 4(a*c), " > 0")
+        else
+            rethrow(e)
+        end
     end
 
     return [root1, root2]
@@ -31,18 +39,24 @@ function get_roots_deg3(expression, x)
     Q = ((3*a*c) - b^2)//(9a^2)
     R = (9*a*b*c - ((27*(a^2)*d)+2b^3))//(54a^3)
 
-    S = 0
-    T = 0
 
     # cbrt(negative real numbers) evaluates normally with symbolics
     # while (im)^(1//3) also evaluates normally,
     # the other cases cbrt(im) and (-real)^(1/3) do not evaluate
-    if eval(Symbolics.toexpr((Q^3+R^2))) > 0 
-        S = Symbolics.term(cbrt, (R + Symbolics.term(sqrt, (Q^3+R^2))))
-        T = Symbolics.term(cbrt, (R - Symbolics.term(sqrt, (Q^3+R^2))))
-    else
-        S = (Symbolics.term(complex, (R + im*Symbolics.term(sqrt, -(Q^3+R^2)))))^(1//3)
-        T = (Symbolics.term(complex, (R - im*Symbolics.term(sqrt, -(Q^3+R^2)))))^(1//3)
+
+    S = Symbolics.term(cbrt, (R + Symbolics.term(sqrt, (Q^3+R^2))))
+    T = Symbolics.term(cbrt, (R - Symbolics.term(sqrt, (Q^3+R^2))))
+    try
+        if eval(Symbolics.toexpr((Q^3+R^2))) < 0 
+            S = (Symbolics.term(complex, (R + im*Symbolics.term(sqrt, -(Q^3+R^2)))))^(1//3)
+            T = (Symbolics.term(complex, (R - im*Symbolics.term(sqrt, -(Q^3+R^2)))))^(1//3)
+        end
+    catch e
+        if typeof(e) == UndefVarError
+            println("Condition: ", Q^3+R^2, " > 0")
+        else
+            rethrow(e)
+        end
     end
 
 
@@ -71,6 +85,8 @@ function get_roots_deg4(expression, x)
 
     @variables m y
     eq_m = 8m^3 + 8(p)*m^2 + (2(p^2) - 8r)m - q^2
+
+    # should this be get_roots since we always know that its of degree 3?
     roots_m = solve(eq_m, m)
     m = 0
     for root in roots_m
@@ -90,37 +106,50 @@ end
 
 function get_yroots(m, p, q)
     a = 1
-    b1 = Symbolics.term(sqrt, Symbolics.term(complex, 2m))
-    c1 = (p//2) + m - (q//(2*Symbolics.term(sqrt, Symbolics.term(complex, 2m))))
-    b2 = -Symbolics.term(sqrt, Symbolics.term(complex, 2m))
-    c2 = (p//2) + m + (q//(2*Symbolics.term(sqrt, Symbolics.term(complex, 2m))))
+    if m < 0
+        b1 = im*Symbolics.term(sqrt,  -2m)
+        c1 = (p//2) + m - (q//(2*im*Symbolics.term(sqrt, -2m)))
+        b2 = -im*Symbolics.term(sqrt, -2m)
+        c2 = (p//2) + m + (q//(2*im*Symbolics.term(sqrt, -2m)))
+    else
+        b1 = Symbolics.term(sqrt,  2m)
+        c1 = (p//2) + m - (q//(2*Symbolics.term(sqrt, 2m)))
+        b2 = -Symbolics.term(sqrt, 2m)
+        c2 = (p//2) + m + (q//(2*Symbolics.term(sqrt, 2m)))
+    end
 
     root1 = simplify((-b1 + Symbolics.term(sqrt, (b1^2 - 4(a*c1)))) / 2a)
     root2 = simplify((-b1 - Symbolics.term(sqrt, (b1^2 - 4(a*c1)))) / 2a)
-    if eval(Symbolics.toexpr(b1^2 - 4(a*c1))) < 0
-        root1 = simplify((-b1 + Symbolics.term(sqrt, Symbolics.term(complex, (b1^2 - 4(a*c1))))) / 2a)
-        root2 = simplify((-b1 - Symbolics.term(sqrt, Symbolics.term(complex, (b1^2 - 4(a*c1))))) / 2a)
+    if real(eval(Symbolics.toexpr(b1^2 - 4(a*c1)))) < 0
+        root1 = simplify((-b1 + im*Symbolics.term(sqrt, -(b1^2 - 4(a*c1)))) / 2a)
+        root2 = simplify((-b1 - im*Symbolics.term(sqrt, -(b1^2 - 4(a*c1)))) / 2a)
     end
 
 
     root3 = simplify((-b2 + Symbolics.term(sqrt, (b2^2 - 4(a*c2)))) / 2a)
     root4 = simplify((-b2 - Symbolics.term(sqrt, (b2^2 - 4(a*c2)))) / 2a)
-    if eval(Symbolics.toexpr(b2^2 - 4(a*c2))) < 0
-        root3 = simplify((-b2 + Symbolics.term(sqrt, Symbolics.term(complex, (b2^2 - 4(a*c2))))) / 2a)
-        root4 = simplify((-b2 - Symbolics.term(sqrt, Symbolics.term(complex, (b2^2 - 4(a*c2))))) / 2a)
+    if real(eval(Symbolics.toexpr(b2^2 - 4(a*c2)))) < 0
+        root3 = simplify((-b2 + im*Symbolics.term(sqrt, -(b2^2 - 4(a*c2)))) / 2a)
+        root4 = simplify((-b2 - im*Symbolics.term(sqrt, -(b2^2 - 4(a*c2)))) / 2a)
     end
 
     return [root1, root2, root3, root4]
 end
 
 
-function get_roots(expression, x)
+function get_roots(expression, x, subs)
     degree = Symbolics.degree(expression, x)
 
     if degree == 0 && expression == 0
         return 0
     elseif degree == 0 && expression != 0
         throw("Not a valid statement")
+    end
+
+
+    for (var, sub) in subs 
+        # should we change the og expression or make a copy then sub?
+        expression = substitute(expression, Dict([var => sub]))
     end
 
     if degree == 1
