@@ -3,8 +3,15 @@ using Nemo
 include("univar.jl")
 include("coeffs.jl")
 
-coeff = Symbolics.coeff
 
+function sub_subs(arr_roots, subs)
+    for i = 1:length(arr_roots)
+        vars = Symbolics.get_variables(arr_roots[i])
+        for var in vars
+            arr_roots[i] = substitute(arr_roots[i], Dict([var => subs[var]]))
+        end
+    end
+end
 
 function solve(expression, x)
     try
@@ -19,12 +26,15 @@ function solve(expression, x)
     expression = simplify.(expression)
     degree = Symbolics.degree(expression, x)
 
+    subs, expression = filter_poly(expression)
     u, factors = factor_use_nemo(expression)
 
     arr_roots = []
 
     if degree < 5 && length(factors) == 1
-        return get_roots(expression, x)
+        append!(arr_roots, get_roots(expression, x))
+        sub_subs(arr_roots, subs)
+        return arr_roots
     end
 
     if length(factors) != 1
@@ -40,6 +50,7 @@ function solve(expression, x)
         throw("This expression does not have an exact solution, use a numerical method instead.")
     end
 
+    sub_subs(arr_roots, subs)
     return arr_roots
 end
 
@@ -270,3 +281,5 @@ end
 #@variables x y z
 #eqs = [x-y-z, x+y-z^2, x^2 + y^2 - 1]
 #solve(eqs, [x,y,z])
+@variables x
+solve(x + Symbolics.term(sqrt, 4//1), x)

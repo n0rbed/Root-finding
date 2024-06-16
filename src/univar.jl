@@ -5,9 +5,9 @@ function get_roots_deg2(expression, x)
     # ax^2 + bx + c = 0
     coeffs, constant = polynomial_coeffs(expression, [x])
 
-    a = rationalize(coeffs[x^2])
-    b = rationalize(get(coeffs, x, 0))
-    c = rationalize(get(coeffs, x^0, 0))
+    a = (coeffs[x^2])
+    b = (get(coeffs, x, 0))
+    c = (get(coeffs, x^0, 0))
 
 
     root1 = simplify((-b + Symbolics.term(sqrt, (b^2 - 4(a*c)))) / 2a)
@@ -23,10 +23,10 @@ end
 function get_roots_deg3(expression, x)
     coeffs, constant = polynomial_coeffs(expression, [x])
 
-    a = rationalize(coeffs[x^3])
-    b = rationalize(get(coeffs, x^2, 0))
-    c = rationalize(get(coeffs, x, 0))
-    d = rationalize(get(coeffs, x^0, 0))
+    a = (coeffs[x^3])
+    b = (get(coeffs, x^2, 0))
+    c = (get(coeffs, x, 0))
+    d = (get(coeffs, x^0, 0))
 
     Q = ((3*a*c) - b^2)//(9a^2)
     R = (9*a*b*c - ((27*(a^2)*d)+2b^3))//(54a^3)
@@ -57,11 +57,11 @@ end
 function get_roots_deg4(expression, x)
     coeffs, constant = polynomial_coeffs(expression, [x])
 
-    a = rationalize(coeffs[x^4])
-    b = rationalize(get(coeffs, x^3, 0))
-    c = rationalize(get(coeffs, x^2, 0))
-    d = rationalize(get(coeffs, x, 0))
-    e = rationalize(get(coeffs, x^0, 0))
+    a = (coeffs[x^4])
+    b = (get(coeffs, x^3, 0))
+    c = (get(coeffs, x^2, 0))
+    d = (get(coeffs, x, 0))
+    e = (get(coeffs, x^0, 0))
 
     p = (8(a*c)-3(b^2))//(8(a^2))
 
@@ -126,10 +126,10 @@ function get_roots(expression, x)
     if degree == 1
         # mx + c = 0
         coeffs, constant = polynomial_coeffs(expression, [x])
-        m = rationalize(get(coeffs, x, 0))
-        c = rationalize(get(coeffs, x^0, 0))
+        m = (get(coeffs, x, 0))
+        c = (get(coeffs, x^0, 0))
         root = -c // m
-        return root
+        return [root]
     end
 
     if degree == 2

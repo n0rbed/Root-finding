@@ -1,6 +1,10 @@
 using Symbolics 
 function filter_poly(expr)
     expr = Symbolics.unwrap(expr)
+    if isequal(Symbolics.get_variables(expr)[1], expr)
+        return (Dict(), Symbolics.wrap(expr))
+    end
+
     args = unsorted_arguments(expr)
     subs = Dict()
     for (i, arg) in enumerate(args)
@@ -12,7 +16,7 @@ function filter_poly(expr)
             end
             var = Symbolics.variables("c"*string(i))[1]
             subs[var] = arg
-            args[i] = var
+            args[i] = var.val
             continue
         end
 
@@ -21,6 +25,11 @@ function filter_poly(expr)
             continue
         end
         
+        oper = Symbolics.operation(arg)
+        if oper === (^)
+            continue
+        end
+
         monomial = unsorted_arguments(arg)
         for (j, x) in enumerate(monomial)
             if !isequal(Symbolics.get_variables(x), [])  || isequal(typeof(x), Int64)
@@ -28,10 +37,8 @@ function filter_poly(expr)
             end
             var = Symbolics.variables("c"*string(i))[1]
             subs[var] = x
-            monomial[j] = var
+            monomial[j] = var.val
         end
     end
-    return (subs, expr)
+    return (subs, Symbolics.wrap(expr))
 end
-@variables x
-filter_poly(x^2 - (Symbolics.term(sqrt, 8))^2)
