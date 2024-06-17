@@ -8,10 +8,10 @@ function sub_roots(arr_roots, subs)
     for i = 1:length(arr_roots)
         vars = Symbolics.get_variables(arr_roots[i])
         for var in vars
-#            try
+            try
                 arr_roots[i] = substitute(arr_roots[i], Dict([var => subs[var]]))
-#            catch e
-#            end
+            catch e
+            end
         end
     end
 end
@@ -32,16 +32,23 @@ function solve(expression, x)
     subs, filtered_expression = filter_poly(expression)
     u, factors = factor_use_nemo(filtered_expression)
 
+    # sub into factors 
+    for i = 1:length(factors)
+        for (var, sub) in subs 
+            factors[i] = substitute(factors[i], Dict([var => sub]))
+        end
+    end
+
     arr_roots = []
 
     if degree < 5 && length(factors) == 1
-        append!(arr_roots, get_roots(filtered_expression, x, subs))
+        append!(arr_roots, get_roots(expression, x))
         sub_roots(arr_roots, subs)
         return arr_roots
     end
 
     if length(factors) != 1
-        @assert isequal(expand(filtered_expression - u*expand(prod(factors))), 0)
+        @assert isequal(expand(expression - u*expand(prod(factors))), 0)
 
         for factor in factors
             append!(arr_roots, solve(factor, x))
@@ -53,6 +60,7 @@ function solve(expression, x)
         throw("This expression does not have an exact solution, use a numerical method instead.")
     end
 
+    # is this necessary?
     sub_roots(arr_roots, subs)
     return arr_roots
 end
@@ -173,10 +181,8 @@ function solve(eqs::Vector{Num}, vars::Vector{Num})
                 end
                 subbed_eq = Symbolics.wrap(subbed_eq)
 
+                # handle redundant eqs by checking if lead term is zero
                 if isequal(subbed_eq, 0)
-                    # this is my assumption for which an equation is redundant (most likely wrong)
-                    # i think its redundant if the equation is divisible by something
-                    # i.e. simplifiable, not sure how to describe this as code though. 
                     break
                 end
 
@@ -234,7 +240,7 @@ function factor_use_nemo(poly::Num)
     nemo_poly = Symbolics.substitute(poly, sym_to_nemo)
     nemo_fac = Nemo.factor(nemo_poly)
     nemo_unit = Nemo.unit(nemo_fac)
-    nemo_factors = collect(keys(nemo_fac.fac)) # TODO: do not forget multiplicities
+    nemo_factors = collect(keys(nemo_fac.fac)) 
     sym_unit = Rational(Nemo.coeff(nemo_unit, 1))
     sym_factors = map(f -> Symbolics.wrap(nemo_crude_evaluate(f, nemo_to_sym)), nemo_factors)
 
@@ -284,6 +290,6 @@ end
 
 
 # not working
-#@variables x y z
-#eqs = [x-y-z, x+y-z^2, x^2 + y^2 - 1]
+@variables x y z
+eqs = [x-y-z, x+y-z^2, x^2 + y^2 - 1]
 #solve(eqs, [x,y,z])

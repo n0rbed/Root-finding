@@ -137,7 +137,7 @@ function get_yroots(m, p, q)
 end
 
 
-function get_roots(expression, x, subs)
+function get_roots(expression, x)
     degree = Symbolics.degree(expression, x)
 
     if degree == 0 && expression == 0
@@ -147,10 +147,6 @@ function get_roots(expression, x, subs)
     end
 
 
-    for (var, sub) in subs 
-        # should we change the og expression or make a copy then sub?
-        expression = substitute(expression, Dict([var => sub]))
-    end
 
     if degree == 1
         # mx + c = 0
