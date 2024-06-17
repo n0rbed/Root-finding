@@ -7,13 +7,13 @@ end
 
 @variables x y z
 
-@test isequal(solve(x+1, x), -1)
+@test isequal(solve(x+1, x), [-1])
 
-@test isequal(solve(2x+1, x), -1/2)
+@test isequal(solve(2x+1, x), [-1/2])
 
-@test isequal(solve(x, x), 0) 
+@test isequal(solve(x, x), [0]) 
 
-@test isequal(solve((x+1)^20, x), -1)
+@test isequal(solve((x+1)^20, x), [-1])
 
 exp = x^2 + 1
 arr_calcd_roots = sort_roots(eval.(Symbolics.toexpr.(solve(exp, x))))
@@ -39,6 +39,16 @@ arr_known_roots = sort_roots([2, -im, im])
 exp = x^4 + 1
 arr_calcd_roots = sort_roots(eval.(Symbolics.toexpr.(solve(exp, x))))
 arr_known_roots = sort_roots(eval.([-(complex(-1))^(1/4),(complex(-1))^(1/4), (complex(-1))^(3/4), -(complex(-1))^(3/4)]))
+@test isequal(arr_calcd_roots .≈ arr_known_roots, [1,1,1,1])
+
+exp = x^4 - 3x^2 + 2
+arr_calcd_roots = sort_roots(eval.(Symbolics.toexpr.(solve(exp, x))))
+arr_known_roots = sort_roots(eval.([-1, 1, sqrt(2), -sqrt(2)]))
+@test isequal(arr_calcd_roots .≈ arr_known_roots, [1,1,1,1])
+
+exp = x^4 - x^3 - 2x^2 + 6x - 4
+arr_calcd_roots = sort_roots(eval.(Symbolics.toexpr.(solve(exp, x))))
+arr_known_roots = sort_roots(eval.([-2, 1, 1-im, 1+im]))
 @test isequal(arr_calcd_roots .≈ arr_known_roots, [1,1,1,1])
 
 
