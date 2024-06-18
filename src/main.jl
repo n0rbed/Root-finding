@@ -4,18 +4,6 @@ include("univar.jl")
 include("coeffs.jl")
 
 
-function sub_roots(arr_roots, subs)
-    for i = 1:length(arr_roots)
-        vars = Symbolics.get_variables(arr_roots[i])
-        for var in vars
-            try
-                arr_roots[i] = substitute(arr_roots[i], Dict([var => subs[var]]))
-            catch e
-            end
-        end
-    end
-end
-
 function solve(expression, x)
     try
         if isequal(SymbolicUtils.operation(expression.val), ^) && SymbolicUtils.arguments(expression.val)[2] isa Int64
