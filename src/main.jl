@@ -17,7 +17,7 @@ function solve(expression, x)
     expression = simplify.(expression)
     degree = Symbolics.degree(expression, x)
 
-    subs, filtered_expression = filter_poly(expression)
+    subs, filtered_expression = filter_poly(expression, x)
     u, factors = factor_use_nemo(filtered_expression)
 
     # sub into factors 
@@ -275,3 +275,7 @@ end
 # - The roots of f_1(x) = 0 are 1, -1.
 # - The roots of f_2(x) = 0 are 1, (-1 +- sqrt(3)*i)/2.
 # - The solution of f_1 = f_2 = 0 is their common root: 1.
+
+@variables x
+exp = x^4 - 3x^2 + 2
+get_roots(exp, x)

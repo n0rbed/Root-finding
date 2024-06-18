@@ -1,8 +1,7 @@
 using Symbolics
-coeff = Symbolics.coeff
 
 function get_roots_deg1(expression, x)
-    subs, expr = filter_poly(expression)
+    subs, expr = filter_poly(expression, x)
     coeffs, constant = polynomial_coeffs(expr, [x])
     m = get(coeffs, x, 0)
     c = get(coeffs, x^0, 0)
@@ -117,7 +116,7 @@ end
 
 function get_yroots(m, p, q)
     a = 1
-    if m < 0
+    if eval(Symbolics.toexpr(m)) < 0
         b1 = im*Symbolics.term(sqrt,  -2m)
         c1 = (p//2) + m - (q//(2*im*Symbolics.term(sqrt, -2m)))
         b2 = -im*Symbolics.term(sqrt, -2m)
@@ -177,4 +176,3 @@ function get_roots(expression, x)
     end
 
 end
-
