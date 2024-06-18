@@ -35,7 +35,7 @@ function solve(expression, x)
     # sub into factors 
     for i = 1:length(factors)
         for (var, sub) in subs 
-            factors[i] = substitute(factors[i], Dict([var => sub]))
+            factors[i] = substitute(factors[i], Dict([var => sub]), fold=false)
         end
     end
 
@@ -43,7 +43,7 @@ function solve(expression, x)
 
     if degree < 5 && length(factors) == 1
         append!(arr_roots, get_roots(expression, x))
-        sub_roots(arr_roots, subs)
+        #sub_roots(arr_roots, subs)
         return arr_roots
     end
 
@@ -61,7 +61,7 @@ function solve(expression, x)
     end
 
     # is this necessary?
-    sub_roots(arr_roots, subs)
+    #sub_roots(arr_roots, subs)
     return arr_roots
 end
 
@@ -173,11 +173,11 @@ function solve(eqs::Vector{Num}, vars::Vector{Num})
         present_vars = Symbolics.get_variables(eq)
         size_of_sub = length(solutions[1])
 
-        if size(present_vars, 1) == (size_of_sub + 1)
+        if size(present_vars, 1) <= (size_of_sub + 1)
             while !solved 
                 subbed_eq = eq
                 for (var, root) in solutions[1]
-                    subbed_eq = substitute(subbed_eq, Dict([var => root]))
+                    subbed_eq = substitute(subbed_eq, Dict([var => root]), fold=false)
                 end
                 subbed_eq = Symbolics.wrap(subbed_eq)
 
@@ -289,7 +289,6 @@ end
 # - The solution of f_1 = f_2 = 0 is their common root: 1.
 
 
-# not working
 @variables x y z
 eqs = [x-y-z, x+y-z^2, x^2 + y^2 - 1]
-#solve(eqs, [x,y,z])
+solve(eqs, [x,y,z])

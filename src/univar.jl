@@ -1,6 +1,17 @@
 using Symbolics
 coeff = Symbolics.coeff
 
+function get_roots_deg1(expression, x)
+    subs, expr = filter_poly(expression)
+    coeffs, constant = polynomial_coeffs(expr, [x])
+    m = get(coeffs, x, 0)
+    c = get(coeffs, x^0, 0)
+    root = -c//m
+    for (var, sub) in subs
+        root = substitute(root, Dict([var => sub]), fold=false)
+    end
+    return [root]
+end
 function get_roots_deg2(expression, x)
     # ax^2 + bx + c = 0
     coeffs, constant = polynomial_coeffs(expression, [x])
@@ -150,11 +161,7 @@ function get_roots(expression, x)
 
     if degree == 1
         # mx + c = 0
-        coeffs, constant = polynomial_coeffs(expression, [x])
-        m = (get(coeffs, x, 0))
-        c = (get(coeffs, x^0, 0))
-        root = -c // m
-        return [root]
+        return get_roots_deg1(expression, x)
     end
 
     if degree == 2
