@@ -3,6 +3,7 @@ using Nemo, DynamicPolynomials
 using SymbolicUtils: DynamicPolynomials
 include("univar.jl")
 include("coeffs.jl")
+include("nonlinear.jl")
 
 
 function solve(expression, x)
@@ -307,4 +308,4 @@ end
 # - The solution of f_1 = f_2 = 0 is their common root: 1.
 @variables x y z
 eqs = [x+y^2+z, z*x*y, z+3x+y]
-solve(eqs, [x,y,z])
+#solve(eqs, [x,y,z])
