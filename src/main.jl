@@ -1,5 +1,6 @@
 using Symbolics, Groebner, SymbolicUtils
-using Nemo
+using Nemo, DynamicPolynomials
+using SymbolicUtils: DynamicPolynomials
 include("univar.jl")
 include("coeffs.jl")
 
@@ -23,7 +24,7 @@ function solve(expression, x)
     # sub into factors 
     for i = 1:length(factors)
         for (var, sub) in subs 
-            factors[i] = substitute(factors[i], Dict([var => sub]), fold=false)
+            factors[i] = Symbolics.substitute(factors[i], Dict([var => sub]), fold=false)
         end
     end
 
@@ -153,6 +154,39 @@ function solve(eqs::Vector{Num}, vars::Vector{Num})
         i = i + 1
     end
 
+    # filter good z0 by checking if lead term is zero
+    for eq in eqs
+        i = 1
+        while i <= length(solutions)
+            coeff = lead_coeff(expand(eq), vars[lastindex(vars)])
+            for (var, root) in solutions[i]
+                coeff = Symbolics.substitute(coeff, Dict([var => root]), fold=false)
+            end
+            if isequal(coeff, 0)
+                deleteat!(solutions, i)
+                i = i - 1
+            end
+            i = i + 1
+        end
+    end
+
+    # filter eqs
+    i = 1
+    j = i + 1
+    while j <= length(eqs)
+        eq1 = Symbolics.wrap(expand(eqs[i]))
+        eq2 = Symbolics.wrap(expand(eqs[j]))
+        if isequal(Symbolics.get_variables(eq1), Symbolics.get_variables(eq2))
+            deleteat!(eqs, i)
+            deleteat!(eqs, i)
+            insert!(eqs, i, gcd_use_nemo(eq1, eq2))
+            i = i - 1
+            j = i - 1
+        end
+        i = i + 1
+        j = i + 1
+    end
+
     # second, iterate over eqs and sub each found solution
     # then add the roots of the remaining unknown variables 
     j = 1
@@ -165,14 +199,10 @@ function solve(eqs::Vector{Num}, vars::Vector{Num})
             while !solved 
                 subbed_eq = eq
                 for (var, root) in solutions[1]
-                    subbed_eq = substitute(subbed_eq, Dict([var => root]), fold=false)
+                    subbed_eq = Symbolics.substitute(subbed_eq, Dict([var => root]), fold=false)
                 end
                 subbed_eq = Symbolics.wrap(subbed_eq)
 
-                # handle redundant eqs by checking if lead term is zero
-                if isequal(subbed_eq, 0)
-                    break
-                end
 
                 var_tosolve = Symbolics.get_variables(subbed_eq)[1]
                 new_var_sols = solve(subbed_eq, var_tosolve)
@@ -275,7 +305,6 @@ end
 # - The roots of f_1(x) = 0 are 1, -1.
 # - The roots of f_2(x) = 0 are 1, (-1 +- sqrt(3)*i)/2.
 # - The solution of f_1 = f_2 = 0 is their common root: 1.
-
-@variables x
-exp = x^4 - 3x^2 + 2
-get_roots(exp, x)
+@variables x y z
+eqs = [x+y^2+z, z*x*y, z+3x+y]
+solve(eqs, [x,y,z])

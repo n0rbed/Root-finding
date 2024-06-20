@@ -7,7 +7,7 @@ function get_roots_deg1(expression, x)
     c = get(coeffs, x^0, 0)
     root = -c//m
     for (var, sub) in subs
-        root = substitute(root, Dict([var => sub]), fold=false)
+        root = Symbolics.substitute(root, Dict([var => sub]), fold=false)
     end
     return [root]
 end
@@ -151,7 +151,7 @@ function get_roots(expression, x)
     degree = Symbolics.degree(expression, x)
 
     if degree == 0 && expression == 0
-        return 0
+        return []
     elseif degree == 0 && expression != 0
         throw("Not a valid statement")
     end

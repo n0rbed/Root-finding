@@ -1,4 +1,5 @@
 using Symbolics 
+
 function sub(sub_counter, subs, place_to_sub)
     sub_var = Symbolics.variables("c"*string(sub_counter))[1]
     subs[sub_var] = deepcopy(place_to_sub)
@@ -6,6 +7,7 @@ function sub(sub_counter, subs, place_to_sub)
     sub_counter += 1
     return sub_counter, place_to_sub
 end
+
 
 function filter_poly(og_expr, var)
     expr = deepcopy(og_expr)
@@ -30,12 +32,16 @@ function filter_poly(og_expr, var)
         end
 
         # handle "x" as an argument
-        if !isequal(vars, []) && isequal(vars[1], arg)
-            continue
+        if length(vars) == 1
+            if isequal(arg, var)
+                continue
+            elseif isequal(vars[1], arg)
+                sub_counter, args[i] = sub(sub_counter, subs, args[i])
+                continue
+            end
         end
         
         oper = Symbolics.operation(arg)
-        # dont always skip this
         if oper === (^)
             monomial = unsorted_arguments(arg)
             if any(arg -> isequal(arg, var), monomial) 
@@ -45,11 +51,10 @@ function filter_poly(og_expr, var)
             continue
         end
 
-        monomial = unsorted_arguments(arg)
+        monomial = unsorted_arguments(args[i])
         for (j, x) in enumerate(monomial)
             type_x = typeof(x)
             vars = Symbolics.get_variables(x)
-            # error here, what if Symbolics.get_variables is [] ? this is out of bounds
             if (!isequal(vars, []) && isequal(vars[1], var))  || isequal(type_x, Int64) || isequal(type_x, Rational{Int64})
                 continue
             end
@@ -60,6 +65,20 @@ function filter_poly(og_expr, var)
 end
 
 
-#function lead(expr, var)
-#end
+function lead_term(expr, var)
+    subs, expr = filter_poly(expr, var)
+    coeffs, constant = polynomial_coeffs(expr, [var])
+    degree = Symbolics.degree(expr, var)
+    lead_term = coeffs[var^degree]*var^degree
+    for (var, sub) in subs
+        lead_term = Symbolics.substitute(lead_term, Dict([var => sub]), fold=false)
+    end
 
+    return lead_term
+end
+
+function lead_coeff(expr, var)
+    degree = Symbolics.degree(expr, var)
+    lead_coeff = lead_term(expr, var) / (var^degree)
+    return lead_coeff
+end
