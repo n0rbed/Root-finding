@@ -5,9 +5,13 @@ include("nemo_stuff.jl")
 
 
 function solve(expression, x)
+    args = []
+    m = 1
     try
+        args = Symbolics.arguments(expression.val)
         if isequal(SymbolicUtils.operation(expression.val), ^) && SymbolicUtils.arguments(expression.val)[2] isa Int64
-            expression = Symbolics.wrap(SymbolicUtils.arguments(expression.val)[1])
+            expression = Symbolics.wrap(args[1])
+            m = args[2]
         end
     catch e
     end
@@ -30,8 +34,14 @@ function solve(expression, x)
     arr_roots = []
 
     if degree < 5 && length(factors) == 1
-        append!(arr_roots, get_roots(expression, x))
+        arr_roots = get_roots(expression, x)
         #sub_roots(arr_roots, subs)
+        for i = 1:(m-1)
+            try
+                push!(arr_roots, arr_roots[1])    
+            catch e
+            end
+        end
         return arr_roots
     end
 
@@ -118,26 +128,44 @@ function add_sol_to_all(solutions, new_sols, var)
 end
 
 function solve(eqs::Vector{Num}, vars::Vector{Num})
-    eqs = convert(Vector{Any}, Symbolics.groebner_basis(eqs, ordering=Lex(vars)))
+    # do the trick
+    @variables HAT
+    generated = false
+    old_vars = deepcopy(vars)
+    push!(vars, HAT)
+    new_eqs = []
+    while !generated
+        new_eqs = deepcopy(eqs)
+        eq = HAT
+        for i = 1:(length(old_vars))
+            eq -= rand(1:10)*vars[i]
+        end
+        push!(new_eqs, eq)
+        new_eqs = convert(Vector{Any}, Symbolics.groebner_basis(new_eqs, ordering=Lex(vars)))
+
+        if length(new_eqs) <= length(vars) 
+            generated = true
+        end
+    end
 
     solutions = []
 
     # handle "unsolvable" cases
-    if isequal(1, eqs[1])
+    if isequal(1, new_eqs[1])
         return solutions
     end
-
-    if length(eqs) < length(vars)
+    if length(new_eqs) < length(vars)
         throw("Infinite number of solutions")
     end
 
+
     # first, solve any single variable equations
     i = 1
-    while !(i > length(eqs))
-            present_vars = Symbolics.get_variables(eqs[i])
+    while !(i > length(new_eqs))
+            present_vars = Symbolics.get_variables(new_eqs[i])
         for var in vars
             if size(present_vars, 1) == 1 && isequal(var, present_vars[1])
-                new_sols = solve(Symbolics.wrap(eqs[i]), var)
+                new_sols = solve(Symbolics.wrap(new_eqs[i]), var)
 
                 if length(solutions) == 0
                     append!(solutions, [Dict(var => sol) for sol in new_sols])
@@ -145,7 +173,7 @@ function solve(eqs::Vector{Num}, vars::Vector{Num})
                     solutions = add_sol_to_all(solutions, new_sols, var)
                 end
 
-                deleteat!(eqs, i)
+                deleteat!(new_eqs, i)
                 i = i - 1
                 break
             end
@@ -153,43 +181,11 @@ function solve(eqs::Vector{Num}, vars::Vector{Num})
         i = i + 1
     end
 
-    # filter good z0 by checking if lead term is zero
-    for eq in eqs
-        i = 1
-        while i <= length(solutions)
-            coeff = lead_coeff(expand(eq), vars[lastindex(vars)])
-            for (var, root) in solutions[i]
-                coeff = Symbolics.substitute(coeff, Dict([var => root]), fold=false)
-            end
-            if isequal(coeff, 0)
-                deleteat!(solutions, i)
-                i = i - 1
-            end
-            i = i + 1
-        end
-    end
-
-    # filter eqs
-    i = 1
-    j = i + 1
-    while j <= length(eqs)
-        eq1 = Symbolics.wrap(expand(eqs[i]))
-        eq2 = Symbolics.wrap(expand(eqs[j]))
-        if isequal(Symbolics.get_variables(eq1), Symbolics.get_variables(eq2))
-            deleteat!(eqs, i)
-            deleteat!(eqs, i)
-            insert!(eqs, i, gcd_use_nemo(eq1, eq2))
-            i = i - 1
-            j = i - 1
-        end
-        i = i + 1
-        j = i + 1
-    end
 
     # second, iterate over eqs and sub each found solution
     # then add the roots of the remaining unknown variables 
     j = 1
-    for eq in eqs
+    for eq in new_eqs
         solved = false
         present_vars = Symbolics.get_variables(eq)
         size_of_sub = length(solutions[1])
@@ -215,10 +211,13 @@ function solve(eqs::Vector{Num}, vars::Vector{Num})
         end
     end
 
+    for roots in solutions
+        delete!(roots, HAT)
+    end
     return solutions
 end
     
 
-#@variables x y z
-#eqs = [x+y^2+z, z*x*y, z+3x+y]
-#solve(eqs, [x,y,z])
+@variables x y z
+eqs = [x+y^2+z, z*x*y, z+3x+y]
+solve(eqs, [x,y,z])
