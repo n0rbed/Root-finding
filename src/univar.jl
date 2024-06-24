@@ -1,6 +1,16 @@
 using Symbolics
-coeff = Symbolics.coeff
 
+function get_roots_deg1(expression, x)
+    subs, expr = filter_poly(expression, x)
+    coeffs, constant = polynomial_coeffs(expr, [x])
+    m = get(coeffs, x, 0)
+    c = get(coeffs, x^0, 0)
+    root = -c//m
+    for (var, sub) in subs
+        root = Symbolics.substitute(root, Dict([var => sub]), fold=false)
+    end
+    return [root]
+end
 function get_roots_deg2(expression, x)
     # ax^2 + bx + c = 0
     coeffs, constant = polynomial_coeffs(expression, [x])
@@ -106,7 +116,7 @@ end
 
 function get_yroots(m, p, q)
     a = 1
-    if m < 0
+    if eval(Symbolics.toexpr(m)) < 0
         b1 = im*Symbolics.term(sqrt,  -2m)
         c1 = (p//2) + m - (q//(2*im*Symbolics.term(sqrt, -2m)))
         b2 = -im*Symbolics.term(sqrt, -2m)
@@ -137,28 +147,20 @@ function get_yroots(m, p, q)
 end
 
 
-function get_roots(expression, x, subs)
+function get_roots(expression, x)
     degree = Symbolics.degree(expression, x)
 
     if degree == 0 && expression == 0
-        return 0
+        return []
     elseif degree == 0 && expression != 0
         throw("Not a valid statement")
     end
 
 
-    for (var, sub) in subs 
-        # should we change the og expression or make a copy then sub?
-        expression = substitute(expression, Dict([var => sub]))
-    end
 
     if degree == 1
         # mx + c = 0
-        coeffs, constant = polynomial_coeffs(expression, [x])
-        m = (get(coeffs, x, 0))
-        c = (get(coeffs, x^0, 0))
-        root = -c // m
-        return [root]
+        return get_roots_deg1(expression, x)
     end
 
     if degree == 2
@@ -174,4 +176,3 @@ function get_roots(expression, x, subs)
     end
 
 end
-
