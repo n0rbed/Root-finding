@@ -4,7 +4,7 @@ include("coeffs.jl")
 include("nemo_stuff.jl")
 
 
-function solve(expression, x)
+function solve(expression, x, mult=false)
     args = []
     m = 1
     try
@@ -35,13 +35,17 @@ function solve(expression, x)
 
     if degree < 5 && length(factors) == 1
         arr_roots = get_roots(expression, x)
-        #sub_roots(arr_roots, subs)
-        for i = 1:(m-1)
-            try
-                push!(arr_roots, arr_roots[1])    
-            catch e
+
+        # multiplicities
+        if mult
+            for i = 1:(m-1)
+                try
+                    push!(arr_roots, arr_roots[1])    
+                catch e
+                end
             end
         end
+
         return arr_roots
     end
 
@@ -58,8 +62,6 @@ function solve(expression, x)
         throw("This expression does not have an exact solution, use a numerical method instead.")
     end
 
-    # is this necessary?
-    #sub_roots(arr_roots, subs)
     return arr_roots
 end
 
@@ -130,20 +132,24 @@ end
 function solve(eqs::Vector{Num}, vars::Vector{Num})
     # do the trick
     @variables HAT
-    generated = false
-    old_vars = deepcopy(vars)
+    old_len = length(vars)
     push!(vars, HAT)
     new_eqs = []
-    while !generated
+    generated = true 
+    while generated
         new_eqs = deepcopy(eqs)
         eq = HAT
-        for i = 1:(length(old_vars))
+        for i = 1:(old_len)
             eq -= rand(1:10)*vars[i]
         end
         push!(new_eqs, eq)
         new_eqs = convert(Vector{Any}, Symbolics.groebner_basis(new_eqs, ordering=Lex(vars)))
 
-        if length(new_eqs) <= length(vars) 
+        for i = 2:length(new_eqs)
+            generated &= all(Symbolics.degree(var) > 1 for var in Symbolics.get_variables(new_eqs[i]))
+        end
+
+        if length(new_eqs) > length(vars) 
             generated = true
         end
     end
