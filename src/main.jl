@@ -53,7 +53,7 @@ function solve(expression, x, mult=false)
         @assert isequal(expand(expression - u*expand(prod(factors))), 0)
 
         for factor in factors
-            append!(arr_roots, solve(factor, x))
+            append!(arr_roots, solve(factor, x, mult))
         end
     end
 
@@ -74,14 +74,14 @@ end
 # gcd_use_nemo(x - 1, (x-1)^20), which is again x-1.
 # now we just need to solve(x-1, x) to get the common root in this
 # system of equations.
-function solve(polys::Vector, x::Num)
+function solve(polys::Vector, x::Num, mult=false)
     polys = unique(polys)
 
     if length(polys) < 1
         throw("No expressions entered")
     end
     if length(polys) == 1
-        return solve(polys[1], x)
+        return solve(polys[1], x, mult)
     end
 
     gcd = gcd_use_nemo(polys[1], polys[2])
@@ -94,7 +94,8 @@ function solve(polys::Vector, x::Num)
         @info "Nemo gcd is 1."
         return []
     end
-    return solve(gcd, x)
+
+    return solve(gcd, x, mult)
 end
 
 function contains(var, vars)
@@ -129,7 +130,7 @@ function add_sol_to_all(solutions, new_sols, var)
     return solutions
 end
 
-function solve(eqs::Vector{Num}, vars::Vector{Num})
+function solve(eqs::Vector{Num}, vars::Vector{Num}, mult=false)
     # do the trick
     @variables HAT
     old_len = length(vars)
@@ -171,7 +172,7 @@ function solve(eqs::Vector{Num}, vars::Vector{Num})
             present_vars = Symbolics.get_variables(new_eqs[i])
         for var in vars
             if size(present_vars, 1) == 1 && isequal(var, present_vars[1])
-                new_sols = solve(Symbolics.wrap(new_eqs[i]), var)
+                new_sols = solve(Symbolics.wrap(new_eqs[i]), var, mult)
 
                 if length(solutions) == 0
                     append!(solutions, [Dict(var => sol) for sol in new_sols])
@@ -206,7 +207,7 @@ function solve(eqs::Vector{Num}, vars::Vector{Num})
 
 
                 var_tosolve = Symbolics.get_variables(subbed_eq)[1]
-                new_var_sols = solve(subbed_eq, var_tosolve)
+                new_var_sols = solve(subbed_eq, var_tosolve, mult)
                 solutions = add_sol(solutions, new_var_sols, var_tosolve, 1)
 
                 solved = all(x -> length(x) == j+1, solutions)
@@ -223,7 +224,3 @@ function solve(eqs::Vector{Num}, vars::Vector{Num})
     return solutions
 end
     
-
-@variables x y z
-eqs = [x+y^2+z, z*x*y, z+3x+y]
-solve(eqs, [x,y,z])
