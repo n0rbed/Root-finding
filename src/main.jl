@@ -8,8 +8,10 @@ function solve(expression, x, mult=false)
     args = []
     m = 1
     try
-        args = Symbolics.arguments(expression.val)
-        if isequal(SymbolicUtils.operation(expression.val), ^) && SymbolicUtils.arguments(expression.val)[2] isa Int64
+        exp = Symbolics.unwrap(simplify(expression))
+        args = unsorted_arguments(exp)
+        operation = SymbolicUtils.operation(exp)
+        if isequal(operation, ^) && args[2] isa Int64
             expression = Symbolics.wrap(args[1])
             m = args[2]
         end
@@ -136,8 +138,8 @@ function solve(eqs::Vector{Num}, vars::Vector{Num}, mult=false)
     old_len = length(vars)
     push!(vars, HAT)
     new_eqs = []
-    generated = true 
-    while generated
+    generating = true
+    while generating
         new_eqs = deepcopy(eqs)
         eq = HAT
         for i = 1:(old_len)
@@ -146,12 +148,12 @@ function solve(eqs::Vector{Num}, vars::Vector{Num}, mult=false)
         push!(new_eqs, eq)
         new_eqs = convert(Vector{Any}, Symbolics.groebner_basis(new_eqs, ordering=Lex(vars)))
 
-        for i = 2:length(new_eqs)
-            generated &= all(Symbolics.degree(var) > 1 for var in Symbolics.get_variables(new_eqs[i]))
+        if length(new_eqs) <= length(vars) 
+            generating &= false
         end
 
-        if length(new_eqs) > length(vars) 
-            generated = true
+        for i = 2:length(new_eqs)
+            generating |= all(Symbolics.degree(var) > 1 for var in Symbolics.get_variables(new_eqs[i]))
         end
     end
 
@@ -175,7 +177,7 @@ function solve(eqs::Vector{Num}, vars::Vector{Num}, mult=false)
                 new_sols = solve(Symbolics.wrap(new_eqs[i]), var, mult)
 
                 if length(solutions) == 0
-                    append!(solutions, [Dict(var => sol) for sol in new_sols])
+                    append!(solutions, [Dict{Num, Any}(var => sol) for sol in new_sols])
                 else
                     solutions = add_sol_to_all(solutions, new_sols, var)
                 end
@@ -191,7 +193,6 @@ function solve(eqs::Vector{Num}, vars::Vector{Num}, mult=false)
 
     # second, iterate over eqs and sub each found solution
     # then add the roots of the remaining unknown variables 
-    j = 1
     for eq in new_eqs
         solved = false
         present_vars = Symbolics.get_variables(eq)
@@ -210,11 +211,8 @@ function solve(eqs::Vector{Num}, vars::Vector{Num}, mult=false)
                 new_var_sols = solve(subbed_eq, var_tosolve, mult)
                 solutions = add_sol(solutions, new_var_sols, var_tosolve, 1)
 
-                solved = all(x -> length(x) == j+1, solutions)
+                solved = all(x -> length(x) == size_of_sub+1, solutions)
             end
-        end
-        if solved
-            j = j + 1
         end
     end
 
@@ -224,3 +222,6 @@ function solve(eqs::Vector{Num}, vars::Vector{Num}, mult=false)
     return solutions
 end
     
+
+@variables x y z
+solve([x^2, y ,z], [x,y,z])

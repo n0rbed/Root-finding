@@ -102,12 +102,12 @@ arr_known_roots = sort_arr([Dict(x => 0, y=>1, z=>-1), Dict(x=>1, y=>0, z=>1),
 # Alex:
 
 # solve returns evaluated sqrt(2)
-# expr = x - Symbolics.term(sqrt, 2)
-# @test solve(expr, x) == Symbolics.term(sqrt, 2)
+ expr = x - Symbolics.term(sqrt, 2)
+@test isequal(solve(expr, x)[1], Symbolics.term(sqrt, 2))
 
 # solve errors
-# expr = x + im
-# @test solve(expr, x) == -im
+ expr = x + im
+ #@test solve(expr, x) == -im
 
 # Factorisation #
 
