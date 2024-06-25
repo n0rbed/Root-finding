@@ -99,8 +99,15 @@ arr_known_roots = sort_arr([Dict(x => 0, y=>1, z=>-1), Dict(x=>1, y=>0, z=>1),
 @test check_equal(arr_calcd_roots, arr_known_roots)   
 
 
+# Alex:
 
+# solve returns evaluated sqrt(2)
+# expr = x - Symbolics.term(sqrt, 2)
+# @test solve(expr, x) == Symbolics.term(sqrt, 2)
 
+# solve errors
+# expr = x + im
+# @test solve(expr, x) == -im
 
 # Factorisation #
 
