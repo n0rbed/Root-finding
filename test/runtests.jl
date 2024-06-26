@@ -98,6 +98,21 @@ arr_known_roots = sort_arr([Dict(x => 0, y=>1, z=>-1), Dict(x=>1, y=>0, z=>1),
     Dict(x=>(1/2)*(-2+sqrt(2)*im), y=>(1/2)*(-2-sqrt(2)*im), z=>sqrt(2)*im)], [x,y,z])
 @test check_equal(arr_calcd_roots, arr_known_roots)   
 
+eqs = [x^2, y, z]
+arr_calcd_roots = sort_arr(solve(eqs, [x,y,z], true), [x,y,z])
+arr_known_roots = sort_arr([Dict(x=>0, y=>0, z=>0), Dict(x=>0, y=>0, z=>0)], [x,y,z])
+@test check_equal(arr_calcd_roots, arr_known_roots)   
+
+@test isequal(solve([x*y - 1, y], [x,y]), [])
+@test isequal(solve([x+y+1, x+y+2], [x,y]), [])
+
+eqs = [y^2 - 1, x]
+arr_calcd_roots = sort_arr(solve(eqs, [x,y]), [x,y])
+arr_known_roots = sort_arr([Dict(y=>1//1, x=>0//1), Dict(y=>-1//1, x=>0//1)], [x,y])
+@test check_equal(arr_calcd_roots, arr_known_roots)   
+
+
+
 
 # Alex:
 
