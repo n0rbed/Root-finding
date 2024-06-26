@@ -24,13 +24,12 @@ function solve(expression, x, mult=false)
     degree = Symbolics.degree(expression, x)
 
     subs, filtered_expression = filter_poly(expression, x)
-    u, factors = factor_use_nemo(filtered_expression)
+    u, factors = factor_use_nemo(simplify(real(filtered_expression)))
+    factors = convert(Vector{Any}, factors)
 
     # sub into factors 
     for i = 1:length(factors)
-        for (var, sub) in subs 
-            factors[i] = Symbolics.substitute(factors[i], Dict([var => sub]), fold=false)
-        end
+        factors[i] = Symbolics.substitute(factors[i], subs, fold=false)
     end
 
     arr_roots = []
@@ -204,8 +203,6 @@ function solve(eqs::Vector{Num}, vars::Vector{Num}, mult=false)
                 for (var, root) in solutions[1]
                     subbed_eq = Symbolics.substitute(subbed_eq, Dict([var => root]), fold=false)
                 end
-                subbed_eq = Symbolics.wrap(subbed_eq)
-
 
                 var_tosolve = Symbolics.get_variables(subbed_eq)[1]
                 new_var_sols = solve(subbed_eq, var_tosolve, mult)
@@ -224,4 +221,4 @@ end
     
 
 @variables x y z
-solve([x^2, y ,z], [x,y,z])
+solve([x^6 - x], [x])
