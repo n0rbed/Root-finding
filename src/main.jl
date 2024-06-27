@@ -19,9 +19,12 @@ function solve(expression, x, mult=false)
     end
     
 
-    expression = expand(expression)
-    expression = simplify.(expression)
-    degree = Symbolics.degree(expression, x)
+    try
+        expression = expand(expression)
+        expression = simplify.(expression)
+    catch e
+    end
+    degree = Symbolics.degree(real(expression), x)
 
     subs, filtered_expression = filter_poly(expression, x)
     u, factors = factor_use_nemo(simplify(real(filtered_expression)))
@@ -221,4 +224,4 @@ end
     
 
 @variables x y z
-solve([x^6 - x], [x])
+#solve(x^4 + sqrt(complex(-8//1)), x)
