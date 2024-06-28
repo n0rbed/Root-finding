@@ -52,6 +52,53 @@ function factor_use_nemo(poly::Num)
     return sym_unit, sym_factors
 end
 
+find_nemo_var(symbolics_var, nemo_vars) = nemo_vars[findfirst(s -> string(s) == string(symbolics_var), nemo_vars)]
+
+function split_by_variable(f, var)
+    @assert var in Nemo.gens(Nemo.parent(f))
+    F, G = zero(f), []
+    for t in Nemo.terms(f)
+        d = Nemo.degree(t, var)
+        if d > 0
+            push!(G, (d, Nemo.divexact(t, var^d)))
+        else
+            F += t
+        end
+    end
+    return F,G
+end
+
+function factor_use_nemo_and_split(poly::Num, sym_var::Num)
+    check_polynomial(poly)
+    Symbolics.degree(poly) == 0 && return poly, Num[]
+    vars = Symbolics.get_variables(poly)
+    nemo_ring, nemo_vars = Nemo.polynomial_ring(Nemo.QQ, map(string, vars))
+    sym_to_nemo = Dict(vars .=> nemo_vars)
+    nemo_to_sym = Dict(v => k for (k, v) in sym_to_nemo)
+    nemo_poly = Symbolics.substitute(poly, sym_to_nemo)
+    nemo_fac = Nemo.factor(nemo_poly)
+    nemo_unit = Nemo.unit(nemo_fac)
+    nemo_factors = collect(keys(nemo_fac.fac))
+
+    # split !
+    nemo_var = find_nemo_var(sym_var, nemo_vars)
+    nemo_factors_split = map(f -> split_by_variable(f, nemo_var), nemo_factors)
+
+
+    sym_unit = Rational(Nemo.coeff(nemo_unit, 1))
+    sym_factors = map(f -> Symbolics.wrap(nemo_crude_evaluate(f[1], nemo_to_sym)), nemo_factors_split)
+    sym_factors = convert(Vector{Any}, sym_factors)
+
+    for i = 1:length(sym_factors)
+        real_part, imag_parts = nemo_factors_split[i]
+        for (d, monomial) in imag_parts
+            sym_factors[i] += nemo_crude_evaluate(monomial, nemo_to_sym)*im^d
+        end
+    end
+
+    return sym_unit, sym_factors
+end
+
 # gcd(x^2 - y^2, x^3 - y^3) -> x - y
 function gcd_use_nemo(poly1::Num, poly2::Num)
     check_polynomial(poly1)
@@ -88,4 +135,3 @@ end
 # - The roots of f_1(x) = 0 are 1, -1.
 # - The roots of f_2(x) = 0 are 1, (-1 +- sqrt(3)*i)/2.
 # - The solution of f_1 = f_2 = 0 is their common root: 1.
-

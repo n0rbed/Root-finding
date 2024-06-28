@@ -8,6 +8,19 @@ function sub(sub_counter, subs, place_to_sub)
     return sub_counter, place_to_sub
 end
 
+function split_by_variable(f, var)
+    @assert var in Nemo.gens(Nemo.parent(f))
+    F, G = zero(f), []
+    for t in Nemo.terms(f)
+        d = Nemo.degree(t, var)
+        if d > 0
+            push!(G, (d, Nemo.divexact(t, var^d)))
+        else
+            F += t
+        end
+    end
+    return F,G
+end
 
 function filter_stuff(expr)
     type_expr = typeof(expr)
@@ -53,10 +66,10 @@ function filter_poly(og_expr, var)
         subs1, subs2 = Dict(), Dict()
         expr1, expr2 = 0, 0
         if !isequal(expr.re, false)
-            subs1, expr1 = filter_poly(expr.re, x)
+            subs1, expr1 = filter_poly(expr.re, var)
         end
         if !isequal(expr.im, false)
-            subs2, expr2 = filter_poly(expr.im, x)
+            subs2, expr2 = filter_poly(expr.im, var)
         end
         
         merged_subs, expr2 = merge_filtered_exprs(subs1, expr1, subs2, expr2)
@@ -131,6 +144,4 @@ function lead_coeff(expr, var)
     return lead_coeff
 end
 
-
-@variables x
-filter_poly(im*(x+3), x)
+    

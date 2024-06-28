@@ -6,14 +6,14 @@ include("nemo_stuff.jl")
 
 function solve(expression, x, mult=false)
     args = []
-    m = 1
+    mult_n = 1
     try
         exp = Symbolics.unwrap(simplify(expression))
         args = unsorted_arguments(exp)
         operation = SymbolicUtils.operation(exp)
         if isequal(operation, ^) && args[2] isa Int64
             expression = Symbolics.wrap(args[1])
-            m = args[2]
+            mult_n = args[2]
         end
     catch e
     end
@@ -24,11 +24,13 @@ function solve(expression, x, mult=false)
         expression = simplify.(expression)
     catch e
     end
-    degree = Symbolics.degree(real(expression), x)
+    #real(expression) isnt really smart because solve(x*im, x) may be an input
+    subs, filtered_expr = filter_poly(expression, x)
 
-    subs, filtered_expression = filter_poly(expression, x)
-    u, factors = factor_use_nemo(simplify(real(filtered_expression)))
-    factors = convert(Vector{Any}, factors)
+    degree = Symbolics.degree(filtered_expr, x)
+    u, subbed_factors = factor_use_nemo(simplify(real(filtered_expr)))
+    subbed_factors = convert(Vector{Any}, subbed_factors)
+    factors = deepcopy(subbed_factors)
 
     # sub into factors 
     for i = 1:length(factors)
@@ -42,7 +44,7 @@ function solve(expression, x, mult=false)
 
         # multiplicities
         if mult
-            for i = 1:(m-1)
+            for i = 1:(mult_n-1)
                 try
                     push!(arr_roots, arr_roots[1])    
                 catch e
@@ -54,7 +56,7 @@ function solve(expression, x, mult=false)
     end
 
     if length(factors) != 1
-        @assert isequal(expand(expression - u*expand(prod(factors))), 0)
+        @assert isequal(expand(filtered_expr - u*expand(prod(subbed_factors))), 0)
 
         for factor in factors
             append!(arr_roots, solve(factor, x, mult))
@@ -223,5 +225,7 @@ function solve(eqs::Vector{Num}, vars::Vector{Num}, mult=false)
 end
     
 
-@variables x y z
+#@variables x y z
 #solve(x^4 + sqrt(complex(-8//1)), x)
+@variables x
+#get_roots(x^4 + sqrt(complex(-8//1)), x)
