@@ -92,12 +92,14 @@ function factor_use_nemo_and_split(poly::Num, sym_var::Num)
     for i = 1:length(sym_factors)
         real_part, imag_parts = nemo_factors_split[i]
         for (d, monomial) in imag_parts
-            sym_factors[i] += nemo_crude_evaluate(monomial, nemo_to_sym)*im^d
+            monom = Symbolics.wrap(nemo_crude_evaluate(monomial, nemo_to_sym))
+            sym_factors[i] += monom*im^d
         end
     end
 
     return sym_unit, sym_factors
 end
+
 
 # gcd(x^2 - y^2, x^3 - y^3) -> x - y
 function gcd_use_nemo(poly1::Num, poly2::Num)

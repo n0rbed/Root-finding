@@ -7,7 +7,10 @@ function comp_rational(x,y)
     catch e
         r = nothing
         if x isa Float64 || x isa ComplexF64
-            r = rationalize(x)//y
+            real_p = real(x)
+            imag_p = imag(x)
+            r = Rational{BigInt}(real_p)//y
+            r += (Rational{BigInt}(imag_p)//y)*im
         end
         return r
     end
@@ -115,7 +118,8 @@ function get_roots_deg4(expression, x)
 
     arr = get_yroots(m, p, q)
     for (i, root) in enumerate(arr)
-        arr[i] = root - (comp_rational(b,(4a)))
+        r = comp_rational(b, 4a)
+        arr[i] = root - (r)
     end
 
     return arr

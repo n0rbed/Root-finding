@@ -24,13 +24,22 @@ function solve(expression, x, mult=false)
         expression = simplify.(expression)
     catch e
     end
-    #real(expression) isnt really smart because solve(x*im, x) may be an input
+
     subs, filtered_expr = filter_poly(expression, x)
+    filtered_expr = simplify(real(filtered_expr))
 
     degree = Symbolics.degree(filtered_expr, x)
-    u, subbed_factors = factor_use_nemo(simplify(real(filtered_expr)))
+    u, subbed_factors = factor_use_nemo(filtered_expr)
     subbed_factors = convert(Vector{Any}, subbed_factors)
-    factors = deepcopy(subbed_factors)
+    factors = []
+    @variables I
+    if any(isequal(I, var) for var in collect(keys(subs)))
+        u, factors = factor_use_nemo_and_split(filtered_expr, I)
+        delete!(subs, I)
+    else
+        factors = deepcopy(subbed_factors)
+    end
+
 
     # sub into factors 
     for i = 1:length(factors)
@@ -228,4 +237,5 @@ end
 #@variables x y z
 #solve(x^4 + sqrt(complex(-8//1)), x)
 @variables x
-#get_roots(x^4 + sqrt(complex(-8//1)), x)
+# solve(x^4 + sqrt(complex(-8//1))*x, x)
+solve(x^4 + sqrt(complex(-8//1)), x)
