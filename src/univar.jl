@@ -32,13 +32,11 @@ function get_roots_deg2(expression, x)
     subs, filtered_expr = filter_poly(expression, x)
     coeffs, constant = polynomial_coeffs(filtered_expr, [x])
 
-    a = substitute((coeffs[x^2]), subs, fold=false)
-    b = substitute(get(coeffs, x, 0), subs, fold=false)
-    c = substitute(get(coeffs, x^0, 0), subs, fold=false)
+    results = (substitute(get(coeffs, x^i, 0), subs, fold=false) for i in 2:-1:0)
+    a, b, c = results
 
-
-    root1 = simplify((-b + Symbolics.term(sqrt, (b^2 - 4(a*c)))) // 2a)
-    root2 = simplify((-b - Symbolics.term(sqrt, (b^2 - 4(a*c)))) // 2a)
+    root1 = comp_rational(-b + Symbolics.term(sqrt, comp_rational((b^2 - 4(a*c)), 1)), 2a)
+    root2 = comp_rational(-b - Symbolics.term(sqrt, comp_rational((b^2 - 4(a*c)), 1)), 2a)
     try
         if eval(Symbolics.toexpr(b^2 - 4(a*c))) < 0
             root1 = simplify((-b + Symbolics.term(sqrt, Symbolics.term(complex, (b^2 - 4(a*c))))) // 2a)

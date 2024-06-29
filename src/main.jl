@@ -17,13 +17,7 @@ function solve(expression, x, mult=false)
         end
     catch e
     end
-    
-
-    try
-        expression = expand(expression)
-        expression = simplify.(expression)
-    catch e
-    end
+    expression = simplify(expression)
 
     subs, filtered_expr = filter_poly(expression, x)
     filtered_expr = simplify(real(filtered_expr))
@@ -237,5 +231,4 @@ end
 #@variables x y z
 #solve(x^4 + sqrt(complex(-8//1)), x)
 @variables x
-# solve(x^4 + sqrt(complex(-8//1))*x, x)
-solve(x^4 + sqrt(complex(-8//1)), x)
+solve(x^3 + sqrt(complex(-8//1))*x, x)
