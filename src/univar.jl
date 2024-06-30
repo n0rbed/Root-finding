@@ -162,7 +162,7 @@ end
 
 function get_roots(expression, x)
     subs, filtered_expr = filter_poly(expression, x)
-    degree = Symbolics.degree(filtered_expr, x)
+    degree = Symbolics.degree(simplify(real(filtered_expr)), x)
 
     if degree == 0 && expression == 0
         return []

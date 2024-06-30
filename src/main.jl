@@ -246,3 +246,5 @@ end
 
 #@variables x y z
 #solve(x^4 + sqrt(complex(-8//1)), x)
+@variables x y 
+solve([x^5 + x, y], [x, y])
