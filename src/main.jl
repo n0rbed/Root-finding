@@ -246,6 +246,3 @@ end
 
 #@variables x y z
 #solve(x^4 + sqrt(complex(-8//1)), x)
-@variables x
-exp = x^3 + Symbolics.term(sqrt, Symbolics.term(complex, -2//1))*x + 2
-get_roots_deg3(exp, x)
