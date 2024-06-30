@@ -3,6 +3,30 @@ include("univar.jl")
 include("coeffs.jl")
 include("nemo_stuff.jl")
 
+function get_and_sub_factors(subs, filtered_expr, subbed_factors)
+    factors = []
+    @variables I
+    if any(isequal(I, var) for var in collect(keys(subs)))
+        u, factors = factor_use_nemo_and_split(filtered_expr, I)
+        delete!(subs, I)
+    else
+        factors = deepcopy(subbed_factors)
+    end
+
+
+    # sub into factors 
+    for i = 1:length(factors)
+        factors[i] = Symbolics.substitute(factors[i], subs, fold=false)
+    end
+
+    return factors
+end
+
+struct RootsOf
+    poly::Num
+end
+Base.show(io::IO, r::RootsOf) = print(io, "roots_of(", r.poly, ")")
+
 
 function solve(expression, x, mult=false)
     args = []
@@ -25,20 +49,7 @@ function solve(expression, x, mult=false)
     degree = Symbolics.degree(filtered_expr, x)
     u, subbed_factors = factor_use_nemo(filtered_expr)
     subbed_factors = convert(Vector{Any}, subbed_factors)
-    factors = []
-    @variables I
-    if any(isequal(I, var) for var in collect(keys(subs)))
-        u, factors = factor_use_nemo_and_split(filtered_expr, I)
-        delete!(subs, I)
-    else
-        factors = deepcopy(subbed_factors)
-    end
-
-
-    # sub into factors 
-    for i = 1:length(factors)
-        factors[i] = Symbolics.substitute(factors[i], subs, fold=false)
-    end
+    factors = get_and_sub_factors(subs, filtered_expr, subbed_factors)
 
     arr_roots = []
 
@@ -62,13 +73,18 @@ function solve(expression, x, mult=false)
         @assert isequal(expand(filtered_expr - u*expand(prod(subbed_factors))), 0)
 
         for factor in factors
-            append!(arr_roots, solve(factor, x, mult))
+            roots = solve(factor, x, mult)
+            if isequal(typeof(roots), RootsOf)
+                push!(arr_roots, roots)
+            else
+                append!(arr_roots, roots)
+            end
         end
     end
 
 
     if isequal(arr_roots, [])
-        throw("This expression does not have an exact solution, use a numerical method instead.")
+        return RootsOf(Symbolics.wrap(expression))
     end
 
     return arr_roots
@@ -231,4 +247,5 @@ end
 #@variables x y z
 #solve(x^4 + sqrt(complex(-8//1)), x)
 @variables x
-solve(x^3 + sqrt(complex(-8//1))*x, x)
+exp = x^3 + Symbolics.term(sqrt, Symbolics.term(complex, -2//1))*x + 2
+get_roots_deg3(exp, x)

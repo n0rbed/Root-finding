@@ -6,11 +6,15 @@ function comp_rational(x,y)
         return r
     catch e
         r = nothing
-        if x isa Float64 || x isa ComplexF64
+        if x isa ComplexF64
             real_p = real(x)
             imag_p = imag(x)
             r = Rational{BigInt}(real_p)//y
-            r += (Rational{BigInt}(imag_p)//y)*im
+            if !isequal(imag_p, 0)
+                r += (Rational{BigInt}(imag_p)//y)*im
+            end
+        elseif x isa Float64 
+            r = Rational{BigInt}(x)//y
         end
         return r
     end

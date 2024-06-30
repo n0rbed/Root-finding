@@ -37,6 +37,7 @@ function check_equal(arr1, arr2)
 end
 
 @variables x y z
+
 # univar 
 @test isequal(solve(x+1, x), [-1])
 
@@ -47,41 +48,79 @@ end
 @test isequal(solve((x+1)^20, x), [-1])
 
 exp = x^2 + 1
-arr_calcd_roots = sort_roots(eval.(Symbolics.toexpr.(solve(exp, x))))
+arr_get_roots = sort_roots(eval.(Symbolics.toexpr.(get_roots_deg2(exp, x))))
+arr_solve_roots = sort_roots(eval.(Symbolics.toexpr.(solve(exp, x))))
 arr_known_roots = sort_roots([-im, im])
-@test all(arr_calcd_roots .≈ arr_known_roots)
+@test all(arr_get_roots .≈ arr_known_roots)
+@test all(arr_solve_roots .≈ arr_known_roots)
 
 exp = x^2 + 2x + 10
-arr_calcd_roots = sort_roots(eval.(Symbolics.toexpr.(solve(exp, x))))
+arr_get_roots = sort_roots(eval.(Symbolics.toexpr.(get_roots_deg2(exp, x))))
+arr_solve_roots = sort_roots(eval.(Symbolics.toexpr.(solve(exp, x))))
 arr_known_roots = sort_roots([-1 + 3im, -1 - 3im])
-@test all(arr_calcd_roots .≈ arr_known_roots)
+@test all(arr_get_roots .≈ arr_known_roots)
+@test all(arr_solve_roots .≈ arr_known_roots)
 
 exp = x^2 - 10x + 25
-arr_calcd_roots = sort_roots(eval.(Symbolics.toexpr.(solve(exp, x))))
+arr_get_roots = sort_roots(eval.(Symbolics.toexpr.(get_roots_deg2(exp, x))))
+arr_solve_roots = sort_roots(eval.(Symbolics.toexpr.(solve(exp, x))))
 arr_known_roots = [5,5]
-@test all(arr_calcd_roots .≈ arr_known_roots)
+@test all(arr_get_roots .≈ arr_known_roots)
+@test all(arr_solve_roots .≈ arr_known_roots)
 
 
 exp = x^3 - 2x^2 + x - 2 
-arr_calcd_roots = sort_roots(eval.(Symbolics.toexpr.(solve(exp, x))))
+arr_get_roots = sort_roots(eval.(Symbolics.toexpr.(get_roots_deg3(exp, x))))
+arr_solve_roots = sort_roots(eval.(Symbolics.toexpr.(solve(exp, x))))
 arr_known_roots = sort_roots([2, -im, im])
-@test all(arr_calcd_roots .≈ arr_known_roots)
+@test all(arr_get_roots .≈ arr_known_roots)
+@test all(arr_solve_roots .≈ arr_known_roots)
+
+exp = x^3 + x^2 + x + 1
+arr_get_roots = sort_roots(eval.(Symbolics.toexpr.(get_roots_deg3(exp, x))))
+arr_solve_roots = sort_roots(eval.(Symbolics.toexpr.(solve(exp, x))))
+arr_known_roots = sort_roots([-1, -im, im])
+@test all(arr_get_roots .≈ arr_known_roots)
+@test all(arr_solve_roots .≈ arr_known_roots)
+
+exp = x^3 + 10x
+arr_get_roots = sort_roots(eval.(Symbolics.toexpr.(get_roots_deg3(exp, x))))
+arr_solve_roots = sort_roots(eval.(Symbolics.toexpr.(solve(exp, x))))
+arr_known_roots = sort_roots([0, -sqrt(10)*im, sqrt(10)*im])
+@test all(arr_get_roots .≈ arr_known_roots)
+@test all(arr_solve_roots .≈ arr_known_roots)
 
 exp = x^4 + 1
-arr_calcd_roots = sort_roots(eval.(Symbolics.toexpr.(solve(exp, x))))
+arr_get_roots = sort_roots(eval.(Symbolics.toexpr.(get_roots_deg4(exp, x))))
+arr_solve_roots = sort_roots(eval.(Symbolics.toexpr.(solve(exp, x))))
 arr_known_roots = sort_roots(eval.([-(complex(-1))^(1/4),(complex(-1))^(1/4), (complex(-1))^(3/4), -(complex(-1))^(3/4)]))
-@test all(arr_calcd_roots .≈ arr_known_roots)
+@test all(arr_get_roots .≈ arr_known_roots)
+@test all(arr_solve_roots .≈ arr_known_roots)
 
 exp = x^4 - 3x^2 + 2
-arr_calcd_roots = sort_roots(eval.(Symbolics.toexpr.(solve(exp, x))))
+arr_get_roots = sort_roots(eval.(Symbolics.toexpr.(get_roots_deg4(exp, x))))
+arr_solve_roots = sort_roots(eval.(Symbolics.toexpr.(solve(exp, x))))
 arr_known_roots = sort_roots(eval.([-1, 1, sqrt(2), -sqrt(2)]))
-@test all(arr_calcd_roots .≈ arr_known_roots)
+@test all(arr_get_roots .≈ arr_known_roots)
+@test all(arr_solve_roots .≈ arr_known_roots)
 
 exp = x^4 - x^3 - 2x^2 + 6x - 4
-arr_calcd_roots = sort_roots(eval.(Symbolics.toexpr.(solve(exp, x))))
+arr_get_roots = sort_roots(eval.(Symbolics.toexpr.(get_roots_deg4(exp, x))))
+arr_solve_roots = sort_roots(eval.(Symbolics.toexpr.(solve(exp, x))))
 arr_known_roots = sort_roots(eval.([-2, 1, 1-im, 1+im]))
-@test all(arr_calcd_roots .≈ arr_known_roots)
+@test all(arr_get_roots .≈ arr_known_roots)
+@test all(arr_solve_roots .≈ arr_known_roots)
 
+#complex univar
+exp = x^4 + sqrt(complex(-2//1))
+arr_get_roots = sort_roots(eval.(Symbolics.toexpr.(solve(exp, x))))
+arr_known_roots = sort_roots(eval.([-Complex(-1)^(3/8)*2^(1/8), Complex(-1)^(3/8)*2^(1/8), 
+    Complex(-1)^(7/8)*2^(1/8), -Complex(-1)^(7/8)*2^(1/8)]))
+@test all(arr_get_roots .≈ arr_known_roots)
+
+
+# standby
+# exp = x^3 + sqrt(complex(-2//1))*x + 2
 
 # multivar
 eqs = [x*y + 2x^2, y^2 -1]
