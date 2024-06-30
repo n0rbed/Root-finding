@@ -246,5 +246,6 @@ end
 
 #@variables x y z
 #solve(x^4 + sqrt(complex(-8//1)), x)
-@variables x y 
-solve([x^5 + x, y], [x, y])
+@variables a b c d e x
+expr = a*x^4 + b*x^3 + c*x^2 + d*x + e
+#get_roots_deg4(expr, x)

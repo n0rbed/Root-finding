@@ -26,11 +26,10 @@ function get_roots_deg1(expression, x)
     m = get(coeffs, x, 0)
     c = get(coeffs, x^0, 0)
     root = -comp_rational(c,m)
-    for (var, sub) in subs
-        root = Symbolics.substitute(root, Dict([var => sub]), fold=false)
-    end
+    root = substitute(root, subs, fold=false)
     return [root]
 end
+
 function get_roots_deg2(expression, x)
     # ax^2 + bx + c = 0
     subs, filtered_expr = filter_poly(expression, x)
@@ -73,7 +72,9 @@ function get_roots_deg3(expression, x)
     S = Symbolics.term(cbrt, (R + Symbolics.term(sqrt, (Q^3+R^2))))
     T = Symbolics.term(cbrt, (R - Symbolics.term(sqrt, (Q^3+R^2))))
     try 
-        eval(Symbolics.toexpr(S))
+        if isequal(eval(Symbolics.toexpr(S)), S)
+            throw(UndefVarError(:x))
+        end
         eval(Symbolics.toexpr((Q^3+R^2))) < 0 
     catch e
         if typeof(e) == UndefVarError
