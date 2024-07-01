@@ -3,6 +3,22 @@ include("univar.jl")
 include("coeffs.jl")
 include("nemo_stuff.jl")
 
+function clean_f(filtered_expr)
+    filtered_expr = simplify_fractions(simplify(real(filtered_expr)))
+    unwrapped_f = Symbolics.unwrap(filtered_expr)
+    oper = 0
+    try
+        oper = operation(unwrapped_f)
+    catch e
+        return filtered_expr
+    end
+    if oper === (/)
+        args = unsorted_arguments(unwrapped_f)
+        filtered_expr = Symbolics.wrap(args[1])
+        @info args[2] != 0
+    end
+    return filtered_expr
+end
 function get_and_sub_factors(subs, filtered_expr, subbed_factors)
     factors = []
     @variables I
@@ -44,7 +60,7 @@ function solve(expression, x, mult=false)
     expression = simplify(expression)
 
     subs, filtered_expr = filter_poly(expression, x)
-    filtered_expr = simplify(real(filtered_expr))
+    filtered_expr = clean_f(filtered_expr)
 
     degree = Symbolics.degree(filtered_expr, x)
     u, subbed_factors = factor_use_nemo(filtered_expr)
@@ -243,10 +259,3 @@ function solve(eqs::Vector{Num}, vars::Vector{Num}, mult=false)
     return solutions
 end
     
-
-#@variables x y z
-#solve(x^4 + sqrt(complex(-8//1)), x)
-@variables a b c d e x
-expr = a*x^4 + b*x^3 + c*x^2 + d*x + e
-#get_roots_deg4(expr, x)
-get_roots_deg4(x^4 + 1, x)

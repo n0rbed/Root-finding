@@ -30,6 +30,25 @@ function get_roots_deg1(expression, x)
     return [root]
 end
 
+function get_deg2_with_coeffs(coeffs::Vector{Any})
+    a, b, c = coeffs
+
+    root1 = comp_rational(-b + Symbolics.term(sqrt, comp_rational((b^2 - 4(a*c)), 1)), 2a)
+    root2 = comp_rational(-b - Symbolics.term(sqrt, comp_rational((b^2 - 4(a*c)), 1)), 2a)
+    try
+        if eval(Symbolics.toexpr(b^2 - 4(a*c))) < 0
+            root1 = simplify((-b + Symbolics.term(sqrt, Symbolics.term(complex, (b^2 - 4(a*c))))) // 2a)
+            root2 = simplify((-b - Symbolics.term(sqrt, Symbolics.term(complex, (b^2 - 4(a*c))))) // 2a)
+        end
+    catch e
+        if e isa TypeError
+            println("Answers assume that ", b^2 - 4(a*c), " > 0")
+        end
+    end
+
+    return [root1, root2]
+end
+
 function get_roots_deg2(expression, x)
     # ax^2 + bx + c = 0
     subs, filtered_expr = filter_poly(expression, x)
@@ -145,9 +164,8 @@ function get_yroots(m, p, q)
         c2 = (p//2) + m + (q//(2*Symbolics.term(sqrt, 2m)))
     end
 
-    @variables y
-    root1, root2 = get_roots_deg2(a*y^2 + b1*y + c1, y)
-    root3, root4 = get_roots_deg2(a*y^2 + b2*y + c2, y)
+    root1, root2 = get_deg2_with_coeffs([a, b1, c1])
+    root3, root4 = get_deg2_with_coeffs([a, b2, c2])
     return [root1, root2, root3, root4]
 end
 
