@@ -54,10 +54,13 @@ function filter_poly(og_expr, var)
     expr = deepcopy(og_expr)
     expr = Symbolics.unwrap(expr)
     vars = Symbolics.get_variables(expr)
-    if !isequal(vars, []) && isequal(Symbolics.get_variables(expr)[1], expr)
-        return (Dict(), Symbolics.wrap(expr))
-    end
-    if isequal(vars, [])
+    if !isequal(vars, []) && !isequal(Symbolics.get_variables(expr)[1], var)
+        subs = Dict{Num, Any}()
+        sub_counter, expr = sub(1, subs, expr)
+        return (subs, Symbolics.wrap(expr))
+    elseif !isequal(vars, []) && isequal(Symbolics.get_variables(expr)[1], expr)
+        return (Dict{Any, Any}(), Symbolics.wrap(expr))
+    elseif isequal(vars, [])
         return filter_stuff(expr)
     end
 
@@ -112,14 +115,24 @@ function filter_poly(og_expr, var)
             continue
         end
 
-        monomial = unsorted_arguments(args[i])
-        for (j, x) in enumerate(monomial)
-            type_x = typeof(x)
-            vars = Symbolics.get_variables(x)
-            if (!isequal(vars, []) && isequal(vars[1], var))  || isequal(type_x, Int64) || isequal(type_x, Rational{Int64})
-                continue
+        if oper === (*)
+            monomial = unsorted_arguments(args[i])
+            for (j, x) in enumerate(monomial)
+                type_x = typeof(x)
+                vars = Symbolics.get_variables(x)
+                if (!isequal(vars, []) && isequal(vars[1], var))  || isequal(type_x, Int64) || isequal(type_x, Rational{Int64})
+                    continue
+                end
+                sub_counter, monomial[j] = sub(sub_counter, subs, monomial[j])
             end
-            sub_counter, monomial[j] = sub(sub_counter, subs, monomial[j])
+        end
+
+        if oper === (/)
+            monomial = unsorted_arguments(args[i])
+            for (j, x) in enumerate(monomial)
+                new_subs, new_filtered = filter_poly(monomial[j], var)
+                subs, monomial[j] = merge_filtered_exprs(subs, expr, new_subs, new_filtered)
+            end
         end
     end
     return (subs, Symbolics.wrap(expr))
@@ -143,5 +156,3 @@ function lead_coeff(expr, var)
     lead_coeff = lead_term(expr, var) / (var^degree)
     return lead_coeff
 end
-
-    
