@@ -45,6 +45,9 @@ Base.show(io::IO, r::RootsOf) = print(io, "roots_of(", r.poly, ")")
 
 
 function solve(expression, x, mult=false)
+    # Alex: if `x` is assumed to be a variable, writing an assert to explicitly
+    # check that the assumption holds is a good practice.
+
     args = []
     mult_n = 1
     try
@@ -56,6 +59,7 @@ function solve(expression, x, mult=false)
             mult_n = args[2]
         end
     catch e
+        @warn "" e
     end
     expression = simplify(expression)
 
@@ -139,6 +143,8 @@ function solve(polys::Vector, x::Num, mult=false)
     return solve(gcd, x, mult)
 end
 
+# Alex: this function shadows other definitions of `contains`; this will cause
+# bugs if one later uses contains(::String, ::String). Consider remaining it to `contains_var`.
 function contains(var, vars)
     for variable in vars
         if isequal(var, variable)
@@ -148,6 +154,7 @@ function contains(var, vars)
     return false
 end
 
+# Alex: this function mutates `solutions`. Consider renaming it to `add_sol!`.
 function add_sol(solutions, new_sols, var, index)
     sol_used = solutions[index]
     deleteat!(solutions, index)

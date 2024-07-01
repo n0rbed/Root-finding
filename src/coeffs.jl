@@ -87,6 +87,7 @@ function filter_poly(og_expr, var)
         end
         
         merged_subs, expr2 = merge_filtered_exprs(subs1, expr1, subs2, expr2)
+        # Alex: use a name that won't collide with existing variable names.
         @variables I
         merged_subs[I] = im
         expr = expr1 + I*expr2

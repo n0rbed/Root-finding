@@ -47,6 +47,8 @@ end
 
 @test isequal(solve((x+1)^20, x), [-1])
 
+
+
 exp = x^2 + 1
 arr_get_roots = sort_roots(eval.(Symbolics.toexpr.(get_roots_deg2(exp, x))))
 arr_solve_roots = sort_roots(eval.(Symbolics.toexpr.(solve(exp, x))))
@@ -129,6 +131,10 @@ arr_known_roots = [Dict(x=>-1/2, y=>1), Dict(x=>0, y=>-1), Dict(x=>0, y=>1), Dic
 arr_known_roots = sort_arr(arr_known_roots, [x,y])
 @test check_equal(arr_calcd_roots, arr_known_roots)   
 
+@test isequal(get_roots_deg1(x + y^3, x), [-y^3])
+@test_throws DomainError get_roots_deg1(x, x^2)
+@test_throws DomainError get_roots_deg1(x + sin(x), x)
+@test_throws DomainError get_roots_deg1(x^2, x)
 
 eqs = [x-y-z, x+y-z^2, x^2 + y^2 - 1]
 arr_calcd_roots = sort_arr(solve(eqs, [x,y,z]), [x,y,z])
@@ -157,10 +163,8 @@ Dict(x=>(complex(-1))^(3/4), y=>0)], [x,y])
 @test isequal(solve([x*y - 1, y], [x,y]), [])
 @test isequal(solve([x+y+1, x+y+2], [x,y]), [])
 
-# Alex:
-
-# solve returns evaluated sqrt(2)
- expr = x - Symbolics.term(sqrt, 2)
+# solve returns un-evaluated sqrt(2)
+expr = x - Symbolics.term(sqrt, 2)
 @test isequal(solve(expr, x)[1], Symbolics.term(sqrt, 2))
 
 # solve errors
@@ -184,8 +188,6 @@ u, factors = RootFinding.factor_use_nemo(f)
 f = expand((x + 1//3) * ((x*y)^2 + 2x*y + y^2) * (x - z))
 u, factors = RootFinding.factor_use_nemo(f)
 @test isequal(expand(u*prod(factors) - f), 0)
-
-
 
 # Gcd #
 

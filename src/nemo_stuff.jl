@@ -117,23 +117,3 @@ function gcd_use_nemo(poly1::Num, poly2::Num)
     sym_gcd = Symbolics.wrap(nemo_crude_evaluate(nemo_gcd, nemo_to_sym))
     return sym_gcd
 end
-
-# NOTE:
-# We can use Gcd to solve systems of polynomial equations in 1 variable:
-#   f_1(x) = ... = f_m(x) = 0.
-#
-# The algorithm goes as follows:
-#   1. Compute g = gcd(f_1, ..., f_m).
-#   2. Solve   g = 0.
-#
-# Example. Consider the system
-#   f_1(x) = x^2 - 1,
-#   f_2(x) = x^3 - 1.
-#
-#   1. Compute g = x - 1 = gcd(x^2 - 1, x^3 - 1).
-#   2. Solve   g = 0  => x = 1.
-#
-# Therefore, 1 is the only solution. Indeed,
-# - The roots of f_1(x) = 0 are 1, -1.
-# - The roots of f_2(x) = 0 are 1, (-1 +- sqrt(3)*i)/2.
-# - The solution of f_1 = f_2 = 0 is their common root: 1.

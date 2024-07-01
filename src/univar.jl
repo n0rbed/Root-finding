@@ -1,5 +1,7 @@
 using Symbolics
 
+import Symbolics: is_singleton, unwrap
+
 function comp_rational(x,y)
     try
         r = x//y
@@ -21,8 +23,11 @@ function comp_rational(x,y)
 end
 
 function get_roots_deg1(expression, x)
+    !(is_singleton(unwrap(x))) && throw(DomainError("Expected a variable, got $x"))
     subs, expr = filter_poly(expression, x)
     coeffs, constant = polynomial_coeffs(simplify(real(expr)), [x])
+    !(isequal(constant, 0)) && throw(DomainError("Expected a polynomial in $x, got $expression"))
+    !(Symbolics.degree(real(expression), x) == 1) && throw(DomainError("Expected a polynomial of degree 1 in $x, got $expression"))
     m = get(coeffs, x, 0)
     c = get(coeffs, x^0, 0)
     root = -comp_rational(c,m)
@@ -175,6 +180,8 @@ function get_roots(expression, x)
     degree = Symbolics.degree(simplify(real(filtered_expr)), x)
 
     if degree == 0 && expression == 0
+        # Alex: solutions include all real numbers,
+        # we might want to treat this case separately.
         return []
     elseif degree == 0 && expression != 0
         throw("Not a valid statement")
