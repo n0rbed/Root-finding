@@ -40,12 +40,22 @@ end
 function merge_filtered_exprs(subs1, expr1, subs2, expr2)
     sub_counter = length(subs1)+1
     og_subs2 = deepcopy(subs2)
+    if length(subs1) == 0 
+        return subs2, expr2
+    end
     for (var, sub) in og_subs2
-        sub_var = Symbolics.variables("c"*string(sub_counter))[1]
+        sub_var = Symbolics.variables("n"*string(sub_counter))[1]
         expr2 = Symbolics.substitute(expr2, Dict(var=>sub_var), fold=false)
         pop!(subs2, var)
         subs2[sub_var] = sub
         sub_counter += 1
+    end
+    og_subs2 = deepcopy(subs2)
+    for (var, sub) in og_subs2
+        sub_var = Symbolics.variables("c"*string(var)[2:end])[1]
+        expr2 = Symbolics.substitute(expr2, Dict(var=>sub_var), fold=false)
+        pop!(subs2, var)
+        subs2[sub_var] = sub
     end
     merged_subs = Dict(subs1..., subs2...)
     return merged_subs, expr2
