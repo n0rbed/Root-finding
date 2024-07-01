@@ -33,7 +33,7 @@ end
 function get_roots_deg2(expression, x)
     # ax^2 + bx + c = 0
     subs, filtered_expr = filter_poly(expression, x)
-    coeffs, constant = polynomial_coeffs(filtered_expr, [x])
+    coeffs, constant = polynomial_coeffs(simplify(real(filtered_expr)), [x])
 
     results = (substitute(get(coeffs, x^i, 0), subs, fold=false) for i in 2:-1:0)
     a, b, c = results
@@ -46,8 +46,8 @@ function get_roots_deg2(expression, x)
             root2 = simplify((-b - Symbolics.term(sqrt, Symbolics.term(complex, (b^2 - 4(a*c))))) // 2a)
         end
     catch e
-        if typeof(e) == UndefVarError
-            println("Roots: ", root1, " and ", root2, " assume that ", b^2 - 4(a*c), " > 0")
+        if e isa TypeError
+            println("Answers assume that ", b^2 - 4(a*c), " > 0")
         end
     end
 
@@ -136,27 +136,18 @@ function get_yroots(m, p, q)
         b2 = -im*Symbolics.term(sqrt, -2m)
         c2 = (p//2) + m + (q//(2*im*Symbolics.term(sqrt, -2m)))
     else
+        if !isequal(Symbolics.get_variables(m), [])
+            println(m, " is assumed to be > 0")
+        end
         b1 = Symbolics.term(sqrt,  2m)
         c1 = (p//2) + m - (q//(2*Symbolics.term(sqrt, 2m)))
         b2 = -Symbolics.term(sqrt, 2m)
         c2 = (p//2) + m + (q//(2*Symbolics.term(sqrt, 2m)))
     end
 
-    root1 = simplify((-b1 + Symbolics.term(sqrt, (b1^2 - 4(a*c1)))) / 2a)
-    root2 = simplify((-b1 - Symbolics.term(sqrt, (b1^2 - 4(a*c1)))) / 2a)
-    if real(eval(Symbolics.toexpr(b1^2 - 4(a*c1)))) < 0
-        root1 = simplify((-b1 + im*Symbolics.term(sqrt, -(b1^2 - 4(a*c1)))) / 2a)
-        root2 = simplify((-b1 - im*Symbolics.term(sqrt, -(b1^2 - 4(a*c1)))) / 2a)
-    end
-
-
-    root3 = simplify((-b2 + Symbolics.term(sqrt, (b2^2 - 4(a*c2)))) / 2a)
-    root4 = simplify((-b2 - Symbolics.term(sqrt, (b2^2 - 4(a*c2)))) / 2a)
-    if real(eval(Symbolics.toexpr(b2^2 - 4(a*c2)))) < 0
-        root3 = simplify((-b2 + im*Symbolics.term(sqrt, -(b2^2 - 4(a*c2)))) / 2a)
-        root4 = simplify((-b2 - im*Symbolics.term(sqrt, -(b2^2 - 4(a*c2)))) / 2a)
-    end
-
+    @variables y
+    root1, root2 = get_roots_deg2(a*y^2 + b1*y + c1, y)
+    root3, root4 = get_roots_deg2(a*y^2 + b2*y + c2, y)
     return [root1, root2, root3, root4]
 end
 

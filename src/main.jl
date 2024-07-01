@@ -249,3 +249,4 @@ end
 @variables a b c d e x
 expr = a*x^4 + b*x^3 + c*x^2 + d*x + e
 #get_roots_deg4(expr, x)
+get_roots_deg4(x^4 + 1, x)
