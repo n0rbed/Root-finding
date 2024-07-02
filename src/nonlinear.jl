@@ -93,8 +93,9 @@ function attract_collect(lhs, var)
         i += 1
         j += 1
     end
-    println(lhs)
-
+    if n_occurrences(lhs, var) == 1
+        return lhs
+    end
 
 end
 function nl_solve(lhs::Num, var)
