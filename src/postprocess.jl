@@ -6,6 +6,7 @@ using Test
 
 # Alex: can be used in the following way.
 #
+# @variables x
 # sol = RootFinding.solve(x^12 - 1, x)
 # map(RootFinding.postprocess_root, sol)
 
@@ -39,7 +40,7 @@ function _postprocess_root(x::Number)
             return real(x)
         end
     end
-    
+
     return x
 end
 
@@ -47,7 +48,7 @@ function _postprocess_root(x::SymbolicUtils.BasicSymbolic)
     !istree(x) && return x
 
     x = maketerm(
-        typeof(x), 
+        typeof(x),
         operation(x),
         map(_postprocess_root, arguments(x)),
         nothing
