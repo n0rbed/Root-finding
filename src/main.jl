@@ -47,6 +47,7 @@ Base.show(io::IO, r::RootsOf) = print(io, "roots_of(", r.poly, ")")
 function solve(expression, x, mult=false)
     # Alex: if `x` is assumed to be a variable, writing an assert to explicitly
     # check that the assumption holds is a good practice.
+    @assert is_singleton(unwrap(x)) "Expected a variable, got $x"
 
     args = []
     mult_n = 1
@@ -264,8 +265,3 @@ function solve(eqs::Vector{Num}, vars::Vector{Num}, mult=false)
     end
     return solutions
 end
-
-@variables x y z
-eqs = [x^2, y, z]
-solve(eqs, [x,y,z])
-    

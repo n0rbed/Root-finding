@@ -132,9 +132,9 @@ arr_known_roots = sort_arr(arr_known_roots, [x,y])
 @test check_equal(arr_calcd_roots, arr_known_roots)   
 
 @test isequal(get_roots_deg1(x + y^3, x), [-y^3])
-@test_throws DomainError get_roots(x, x^2)
-@test_throws DomainError get_roots(x^3 + sin(x), x)
-@test_throws DomainError get_roots(1/x, x)
+@test_throws AssertionError get_roots(x, x^2)
+@test_throws AssertionError get_roots(x^3 + sin(x), x)
+@test_throws AssertionError get_roots(1/x, x)
 
 
 eqs = [x-y-z, x+y-z^2, x^2 + y^2 - 1]

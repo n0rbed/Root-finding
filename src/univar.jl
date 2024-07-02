@@ -1,5 +1,4 @@
 using Symbolics
-
 import Symbolics: is_singleton, unwrap
 
 function comp_rational(x,y)
@@ -23,10 +22,11 @@ function comp_rational(x,y)
 end
 
 function get_roots_deg1(expression, x)
-    subs, expr = filter_poly(expression, x)
-    coeffs, constant = polynomial_coeffs(simplify(real(expr)), [x])
+    subs, filtered_expr = filter_poly(expression, x)
+    filtered_expr = simplify(real(filtered_expr))
+    coeffs, constant = polynomial_coeffs(filtered_expr , [x])
 
-    !(Symbolics.degree(real(expression), x) == 1) && throw(DomainError("Expected a polynomial of degree 1 in $x, got $expression"))
+    @assert isequal(Symbolics.degree(filtered_expr, x), 1) "Expected a polynomial of degree 1 in $x, got $expression"
 
     m = get(coeffs, x, 0)
     c = get(coeffs, x^0, 0)
@@ -57,9 +57,10 @@ end
 function get_roots_deg2(expression, x)
     # ax^2 + bx + c = 0
     subs, filtered_expr = filter_poly(expression, x)
-    coeffs, constant = polynomial_coeffs(simplify(real(filtered_expr)), [x])
+    filtered_expr = simplify(real(filtered_expr))
+    coeffs, constant = polynomial_coeffs(filtered_expr, [x])
 
-    !(Symbolics.degree(real(expression), x) == 2) && throw(DomainError("Expected a polynomial of degree 2 in $x, got $expression"))
+    @assert isequal(Symbolics.degree(filtered_expr, x), 2) "Expected a polynomial of degree 2 in $x, got $expression"
 
     results = (substitute(get(coeffs, x^i, 0), subs, fold=false) for i in 2:-1:0)
     a, b, c = results
@@ -82,9 +83,10 @@ end
 
 function get_roots_deg3(expression, x)
     subs, filtered_expr = filter_poly(expression, x)
+    filtered_expr = simplify(real(filtered_expr))
     coeffs, constant = polynomial_coeffs(filtered_expr, [x])
 
-    !(Symbolics.degree(real(expression), x) == 3) && throw(DomainError("Expected a polynomial of degree 3 in $x, got $expression"))
+    @assert isequal(Symbolics.degree(filtered_expr, x), 3) "Expected a polynomial of degree 3 in $x, got $expression"
 
     results = (substitute(get(coeffs, x^i, 0), subs, fold=false) for i in 3:-1:0)
     a, b, c, d = results
@@ -124,9 +126,10 @@ end
 
 function get_roots_deg4(expression, x)
     subs, filtered_expr = filter_poly(expression, x)
+    filtered_expr = simplify(real(filtered_expr))
     coeffs, constant = polynomial_coeffs(filtered_expr, [x])
 
-    !(Symbolics.degree(real(expression), x) == 4) && throw(DomainError("Expected a polynomial of degree 4 in $x, got $expression"))
+    @assert isequal(Symbolics.degree(filtered_expr, x), 4) "Expected a polynomial of degree 4 in $x, got $expression"
 
     results = (substitute(get(coeffs, x^i, 0), subs, fold=false) for i in 4:-1:0)
     a, b, c, d, e = results
@@ -182,18 +185,16 @@ end
 
 
 function get_roots(expression, x)
-    !(is_singleton(unwrap(x))) && throw(DomainError("Expected a variable, got $x"))
+    @assert is_singleton(unwrap(x)) "Expected a variable, got $x"
 
     subs, filtered_expr = filter_poly(expression, x)
-    coeffs, constant = polynomial_coeffs(filtered_expr, [x])
-    !(isequal(constant, 0)) && throw(DomainError("Expected a polynomial in $x, got $expression"))
+    coeffs, constant = polynomial_coeffs(simplify(real(filtered_expr)), [x])
+    @assert isequal(constant, 0) "Expected a polynomial in $x, got $expression"
 
     degree = Symbolics.degree(simplify(real(filtered_expr)), x)
 
     if degree == 0 && expression == 0
-        # Alex: solutions include all real numbers,
-        # we might want to treat this case separately.
-        return []
+        return [x]
     elseif degree == 0 && expression != 0
         throw("Not a valid statement")
     end
@@ -201,7 +202,6 @@ function get_roots(expression, x)
 
 
     if degree == 1
-        # mx + c = 0
         return get_roots_deg1(expression, x)
     end
 

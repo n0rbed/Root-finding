@@ -88,9 +88,16 @@ function filter_poly(og_expr, var)
         
         merged_subs, expr2 = merge_filtered_exprs(subs1, expr1, subs2, expr2)
         # Alex: use a name that won't collide with existing variable names.
-        @variables I
-        merged_subs[I] = im
-        expr = expr1 + I*expr2
+        vars = union!(collect(keys(subs1)), collect(keys(subs2)),
+        Symbolics.get_variables(expr1), Symbolics.get_variables(expr2))
+        c=0
+        i_var = Symbolics.variables("I"*string(c))[1]
+        while any(isequal(i_var, present_var) for present_var in vars)
+            c += 1
+            i_var = Symbolics.variables("I"*string(c))[1]
+        end
+        merged_subs[i_var] = im
+        expr = expr1 + i_var*expr2
         return merged_subs, Symbolics.wrap(expr)
     end
     subs = Dict{Any, Any}()
