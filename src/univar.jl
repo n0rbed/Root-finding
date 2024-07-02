@@ -23,11 +23,11 @@ function comp_rational(x,y)
 end
 
 function get_roots_deg1(expression, x)
-    !(is_singleton(unwrap(x))) && throw(DomainError("Expected a variable, got $x"))
     subs, expr = filter_poly(expression, x)
     coeffs, constant = polynomial_coeffs(simplify(real(expr)), [x])
-    !(isequal(constant, 0)) && throw(DomainError("Expected a polynomial in $x, got $expression"))
+
     !(Symbolics.degree(real(expression), x) == 1) && throw(DomainError("Expected a polynomial of degree 1 in $x, got $expression"))
+
     m = get(coeffs, x, 0)
     c = get(coeffs, x^0, 0)
     root = -comp_rational(c,m)
@@ -59,6 +59,8 @@ function get_roots_deg2(expression, x)
     subs, filtered_expr = filter_poly(expression, x)
     coeffs, constant = polynomial_coeffs(simplify(real(filtered_expr)), [x])
 
+    !(Symbolics.degree(real(expression), x) == 2) && throw(DomainError("Expected a polynomial of degree 2 in $x, got $expression"))
+
     results = (substitute(get(coeffs, x^i, 0), subs, fold=false) for i in 2:-1:0)
     a, b, c = results
 
@@ -81,6 +83,8 @@ end
 function get_roots_deg3(expression, x)
     subs, filtered_expr = filter_poly(expression, x)
     coeffs, constant = polynomial_coeffs(filtered_expr, [x])
+
+    !(Symbolics.degree(real(expression), x) == 3) && throw(DomainError("Expected a polynomial of degree 3 in $x, got $expression"))
 
     results = (substitute(get(coeffs, x^i, 0), subs, fold=false) for i in 3:-1:0)
     a, b, c, d = results
@@ -121,6 +125,8 @@ end
 function get_roots_deg4(expression, x)
     subs, filtered_expr = filter_poly(expression, x)
     coeffs, constant = polynomial_coeffs(filtered_expr, [x])
+
+    !(Symbolics.degree(real(expression), x) == 4) && throw(DomainError("Expected a polynomial of degree 4 in $x, got $expression"))
 
     results = (substitute(get(coeffs, x^i, 0), subs, fold=false) for i in 4:-1:0)
     a, b, c, d, e = results
@@ -176,7 +182,12 @@ end
 
 
 function get_roots(expression, x)
+    !(is_singleton(unwrap(x))) && throw(DomainError("Expected a variable, got $x"))
+
     subs, filtered_expr = filter_poly(expression, x)
+    coeffs, constant = polynomial_coeffs(filtered_expr, [x])
+    !(isequal(constant, 0)) && throw(DomainError("Expected a polynomial in $x, got $expression"))
+
     degree = Symbolics.degree(simplify(real(filtered_expr)), x)
 
     if degree == 0 && expression == 0

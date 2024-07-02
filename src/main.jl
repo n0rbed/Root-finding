@@ -52,7 +52,7 @@ function solve(expression, x, mult=false)
     mult_n = 1
     try
         exp = Symbolics.unwrap(simplify(expression))
-        args = unsorted_arguments(exp)
+        args = arguments(exp)
         operation = SymbolicUtils.operation(exp)
         if isequal(operation, ^) && args[2] isa Int64
             expression = Symbolics.wrap(args[1])
@@ -145,7 +145,7 @@ end
 
 # Alex: this function shadows other definitions of `contains`; this will cause
 # bugs if one later uses contains(::String, ::String). Consider remaining it to `contains_var`.
-function contains(var, vars)
+function contains_var(var, vars)
     for variable in vars
         if isequal(var, variable)
             return true
@@ -154,8 +154,7 @@ function contains(var, vars)
     return false
 end
 
-# Alex: this function mutates `solutions`. Consider renaming it to `add_sol!`.
-function add_sol(solutions, new_sols, var, index)
+function add_sol!(solutions, new_sols, var, index)
     sol_used = solutions[index]
     deleteat!(solutions, index)
     for new_sol in new_sols
@@ -253,7 +252,7 @@ function solve(eqs::Vector{Num}, vars::Vector{Num}, mult=false)
 
                 var_tosolve = Symbolics.get_variables(subbed_eq)[1]
                 new_var_sols = solve(subbed_eq, var_tosolve, mult)
-                solutions = add_sol(solutions, new_var_sols, var_tosolve, 1)
+                add_sol!(solutions, new_var_sols, var_tosolve, 1)
 
                 solved = all(x -> length(x) == size_of_sub+1, solutions)
             end
@@ -265,4 +264,8 @@ function solve(eqs::Vector{Num}, vars::Vector{Num}, mult=false)
     end
     return solutions
 end
+
+@variables x y z
+eqs = [x^2, y, z]
+solve(eqs, [x,y,z])
     

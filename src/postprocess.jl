@@ -91,10 +91,3 @@ function postprocess_root(x)
     _postprocess_root(x)
 end
 
-SymbolicUtils.@syms __x
-__symsqrt(x) = SymbolicUtils.term(sqrt, x)
-@test postprocess_root(2 // 1) == 2 && postprocess_root(2 + 0*im) == 2
-@test postprocess_root(__symsqrt(__symsqrt(0)) - 11) == -11
-@test postprocess_root(3*__symsqrt(2)^2) == 6
-@test postprocess_root(__symsqrt(4)) == 2
-@test isequal(postprocess_root(__symsqrt(__x)^2), __symsqrt(__x)^2)

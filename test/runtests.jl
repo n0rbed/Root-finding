@@ -132,9 +132,10 @@ arr_known_roots = sort_arr(arr_known_roots, [x,y])
 @test check_equal(arr_calcd_roots, arr_known_roots)   
 
 @test isequal(get_roots_deg1(x + y^3, x), [-y^3])
-@test_throws DomainError get_roots_deg1(x, x^2)
-@test_throws DomainError get_roots_deg1(x + sin(x), x)
-@test_throws DomainError get_roots_deg1(x^2, x)
+@test_throws DomainError get_roots(x, x^2)
+@test_throws DomainError get_roots(x^3 + sin(x), x)
+@test_throws DomainError get_roots(1/x, x)
+
 
 eqs = [x-y-z, x+y-z^2, x^2 + y^2 - 1]
 arr_calcd_roots = sort_arr(solve(eqs, [x,y,z]), [x,y,z])
@@ -190,6 +191,35 @@ u, factors = RootFinding.factor_use_nemo(f)
 @test isequal(expand(u*prod(factors) - f), 0)
 
 # Gcd #
-
 f1, f2 = x^2 - y^2, x^3 - y^3
 @test isequal(x - y, RootFinding.gcd_use_nemo(f1, f2))
+
+
+# Post Process roots #
+SymbolicUtils.@syms __x
+__symsqrt(x) = SymbolicUtils.term(sqrt, x)
+@test postprocess_root(2 // 1) == 2 && postprocess_root(2 + 0*im) == 2
+@test postprocess_root(__symsqrt(__symsqrt(0)) - 11) == -11
+@test postprocess_root(3*__symsqrt(2)^2) == 6
+@test postprocess_root(__symsqrt(4)) == 2
+@test isequal(postprocess_root(__symsqrt(__x)^2), __symsqrt(__x)^2)
+
+
+
+
+# Filter Poly #
+@variables x y z c1 c2 
+poly = x*sqrt(complex(-2)) + 2.23324234
+subs, filtered_poly = filter_poly(poly, x)
+@test check_polynomial(filtered_poly)
+
+poly = x + 2im
+subs, filtered_poly = filter_poly(poly, x)
+@test check_polynomial(filtered_poly)
+
+# note: poly = im*x + Symbolics.term(sqrt, 2) fails
+poly = (1/im)*x + 3*y*z
+subs, filtered_poly = filter_poly(poly, x)
+@test check_polynomial(filtered_poly)
+
+

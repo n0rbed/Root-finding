@@ -75,7 +75,7 @@ function filter_poly(og_expr, var)
         return filter_stuff(expr)
     end
 
-    args = unsorted_arguments(expr)
+    args = arguments(expr)
     if isequal(typeof(expr), Symbolics.ComplexTerm{Real})
         subs1, subs2 = Dict(), Dict()
         expr1, expr2 = 0, 0
@@ -118,8 +118,8 @@ function filter_poly(og_expr, var)
         end
         
         oper = Symbolics.operation(arg)
+        monomial = arguments(arg)
         if oper === (^)
-            monomial = unsorted_arguments(arg)
             if any(arg -> isequal(arg, var), monomial) 
                 continue
             end
@@ -127,7 +127,6 @@ function filter_poly(og_expr, var)
             continue
         end
 
-        monomial = unsorted_arguments(args[i])
         if oper === (*)
             for (j, x) in enumerate(monomial)
                 type_x = typeof(x)
@@ -168,3 +167,7 @@ function lead_coeff(expr, var)
     lead_coeff = lead_term(expr, var) / (var^degree)
     return lead_coeff
 end
+
+@variables x y z
+poly = im*x + 3y + z
+filter_poly(poly, x)

@@ -14,9 +14,11 @@ export filter_poly
 export lead_term
 export lead_coeff
 export gcd_use_nemo
+export check_polynomial
 export nl_solve
 export n_occurrences
 export split_by_variable
+export postprocess_root
 
 
 end
