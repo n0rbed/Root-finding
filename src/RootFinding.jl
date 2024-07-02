@@ -2,6 +2,7 @@ module RootFinding
 
 include("nemo_stuff.jl")
 include("nonlinear.jl")
+include("postprocess.jl")
 include("main.jl")
 export solve
 export get_roots
