@@ -1,6 +1,4 @@
 using Symbolics
-include("coeffs.jl")
-include("nemo_stuff.jl")
 
 function isolate(lhs::Num, var)
     rhs = 0

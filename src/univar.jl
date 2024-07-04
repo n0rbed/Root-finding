@@ -143,7 +143,7 @@ function get_roots_deg4(expression, x)
     @variables m y
     eq_m = 8m^3 + 8(p)*m^2 + (2(p^2) - 8r)m - q^2
 
-    roots_m = solve(eq_m, m)
+    roots_m = solve_univar(eq_m, m)
     m = 0
     for root in roots_m
         if !isequal(root, 0)

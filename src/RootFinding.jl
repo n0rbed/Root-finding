@@ -1,9 +1,13 @@
 module RootFinding
 
+include("coeffs.jl")
 include("nemo_stuff.jl")
 include("nonlinear.jl")
 include("postprocess.jl")
+include("univar.jl")
+include("solve_helpers.jl")
 include("main.jl")
+
 export solve
 export get_roots
 export get_roots_deg1

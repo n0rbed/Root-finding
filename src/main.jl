@@ -1,54 +1,41 @@
 using Symbolics, Groebner, SymbolicUtils
-include("univar.jl")
-include("coeffs.jl")
-include("nemo_stuff.jl")
 
-function clean_f(filtered_expr)
-    filtered_expr = simplify_fractions(simplify(real(filtered_expr)))
-    unwrapped_f = Symbolics.unwrap(filtered_expr)
-    oper = 0
-    try
-        oper = operation(unwrapped_f)
-    catch e
-        return filtered_expr
+function solve(expr, x, mult=false)
+    type_expr = typeof(expr)
+    type_x = typeof(x)
+    expr_uni = false
+    x_uni = false
+
+    if type_expr == Num || type_expr == SymbolicUtils.BasicSymbolic{Real} || 
+        type_expr == Complex{Num} || type_expr == Symbolics.ComplexTerm{Real}
+        expr_uni = true
     end
-    if oper === (/)
-        args = unsorted_arguments(unwrapped_f)
-        filtered_expr = Symbolics.wrap(args[1])
-        @info args[2] != 0
-    end
-    return filtered_expr
-end
-function get_and_sub_factors(subs, filtered_expr, subbed_factors)
-    factors = []
-    @variables I
-    if any(isequal(I, var) for var in collect(keys(subs)))
-        u, factors = factor_use_nemo_and_split(filtered_expr, I)
-        delete!(subs, I)
-    else
-        factors = deepcopy(subbed_factors)
+
+    if (type_x == Num || type_x == SymbolicUtils.BasicSymbolic{Real})
+        x_uni = true
     end
 
 
-    # sub into factors 
-    for i = 1:length(factors)
-        factors[i] = Symbolics.substitute(factors[i], subs, fold=false)
+    if x_uni
+        @assert is_singleton(unwrap(x)) "Expected a variable, got $x"
+
+        if expr_uni
+            return solve_univar(expr, x, mult)
+        else
+            return solve_multipoly(expr, x, mult)
+        end
+
     end
 
-    return factors
+    if !expr_uni && !x_uni
+        for var in x
+            @assert is_singleton(unwrap(var)) "Expected a variable, got $x"
+        end
+        return solve_multivar(expr, x, mult)
+    end
 end
 
-struct RootsOf
-    poly::Num
-end
-Base.show(io::IO, r::RootsOf) = print(io, "roots_of(", r.poly, ")")
-
-
-function solve(expression, x, mult=false)
-    # Alex: if `x` is assumed to be a variable, writing an assert to explicitly
-    # check that the assumption holds is a good practice.
-    @assert is_singleton(unwrap(x)) "Expected a variable, got $x"
-
+function solve_univar(expression, x, mult=false)
     args = []
     mult_n = 1
     try
@@ -94,7 +81,7 @@ function solve(expression, x, mult=false)
         @assert isequal(expand(filtered_expr - u*expand(prod(subbed_factors))), 0)
 
         for factor in factors
-            roots = solve(factor, x, mult)
+            roots = solve_univar(factor, x, mult)
             if isequal(typeof(roots), RootsOf)
                 push!(arr_roots, roots)
             else
@@ -120,14 +107,14 @@ end
 # gcd_use_nemo(x - 1, (x-1)^20), which is again x-1.
 # now we just need to solve(x-1, x) to get the common root in this
 # system of equations.
-function solve(polys::Vector, x::Num, mult=false)
+function solve_multipoly(polys::Vector, x::Num, mult=false)
     polys = unique(polys)
 
     if length(polys) < 1
         throw("No expressions entered")
     end
     if length(polys) == 1
-        return solve(polys[1], x, mult)
+        return solve_univar(polys[1], x, mult)
     end
 
     gcd = gcd_use_nemo(polys[1], polys[2])
@@ -141,44 +128,11 @@ function solve(polys::Vector, x::Num, mult=false)
         return []
     end
 
-    return solve(gcd, x, mult)
+    return solve_univar(gcd, x, mult)
 end
 
-# Alex: this function shadows other definitions of `contains`; this will cause
-# bugs if one later uses contains(::String, ::String). Consider remaining it to `contains_var`.
-function contains_var(var, vars)
-    for variable in vars
-        if isequal(var, variable)
-            return true
-        end
-    end
-    return false
-end
 
-function add_sol!(solutions, new_sols, var, index)
-    sol_used = solutions[index]
-    deleteat!(solutions, index)
-    for new_sol in new_sols
-        sol_used[var] = new_sol
-        push!(solutions, deepcopy(sol_used))
-    end
-    return solutions
-end
-
-function add_sol_to_all(solutions, new_sols, var)
-    existing_solutions = deepcopy(solutions)
-    solutions = []
-    for new_sol in new_sols
-        copy_sol = deepcopy(existing_solutions)
-        for i = 1:length(copy_sol)
-            copy_sol[i][var] = new_sol
-        end
-        append!(solutions, copy_sol)
-    end
-    return solutions
-end
-
-function solve(eqs::Vector{Num}, vars::Vector{Num}, mult=false)
+function solve_multivar(eqs::Vector{Num}, vars::Vector{Num}, mult=false)
     # do the trick
     @variables HAT
     old_len = length(vars)
@@ -252,7 +206,7 @@ function solve(eqs::Vector{Num}, vars::Vector{Num}, mult=false)
                 end
 
                 var_tosolve = Symbolics.get_variables(subbed_eq)[1]
-                new_var_sols = solve(subbed_eq, var_tosolve, mult)
+                new_var_sols = solve_univar(subbed_eq, var_tosolve, mult)
                 add_sol!(solutions, new_var_sols, var_tosolve, 1)
 
                 solved = all(x -> length(x) == size_of_sub+1, solutions)
