@@ -222,4 +222,7 @@ poly = (1/im)*x + 3*y*z
 subs, filtered_poly = filter_poly(poly, x)
 @test check_polynomial(filtered_poly)
 
+poly = (x+1)*Symbolics.term(log, 3)
+subs, filtered_poly = filter_poly(poly, x)
+@test check_polynomial(filtered_poly)
 

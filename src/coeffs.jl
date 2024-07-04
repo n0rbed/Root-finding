@@ -22,6 +22,27 @@ function split_by_variable(f, var)
     return F,G
 end
 
+function clean_f(filtered_expr, var)
+    filtered_expr = simplify_fractions(simplify(real(filtered_expr)))
+    unwrapped_f = Symbolics.unwrap(filtered_expr)
+    oper = 0
+    try
+        oper = operation(unwrapped_f)
+    catch e
+        @warn "" e
+        return filtered_expr
+    end
+    if oper === (/)
+        args = arguments(unwrapped_f)
+        if any(isequal(var, x) for x in Symbolics.get_variables(args[2]))
+            return filtered_expr
+        end
+        filtered_expr = Symbolics.wrap(args[1])
+        @info args[2] != 0
+    end
+    return filtered_expr
+end
+
 function filter_stuff(expr)
     type_expr = typeof(expr)
     if isequal(type_expr, Int64) || isequal(type_expr, Rational{Int64})
@@ -87,10 +108,9 @@ function filter_poly(og_expr, var)
         end
         
         merged_subs, expr2 = merge_filtered_exprs(subs1, expr1, subs2, expr2)
-        # Alex: use a name that won't collide with existing variable names.
         vars = union!(collect(keys(subs1)), collect(keys(subs2)),
         Symbolics.get_variables(expr1), Symbolics.get_variables(expr2))
-        c=0
+        c = 0
         i_var = Symbolics.variables("I"*string(c))[1]
         while any(isequal(i_var, present_var) for present_var in vars)
             c += 1
@@ -110,7 +130,7 @@ function filter_poly(og_expr, var)
             if type_arg == Int64 || type_arg == Rational{Int64}
                 continue
             end
-            sub_counter, args[i] = sub(sub_counter, subs, args[i])
+            sub_counter, args[i] = deepcopy(sub(sub_counter, subs, args[i]))
             continue
         end
 
@@ -149,11 +169,19 @@ function filter_poly(og_expr, var)
             for (j, x) in enumerate(monomial)
                 new_subs, new_filtered = filter_poly(monomial[j], var)
                 subs, monomial[j] = merge_filtered_exprs(subs, expr, new_subs, new_filtered)
-                monomial[j] = monomial[j].val
+                if typeof(monomial[j]) == Num
+                    monomial[j] = monomial[j].val
+                end
             end
         end
     end
-    return (subs, Symbolics.wrap(expr))
+
+    # reassemble expr to avoid memory issue
+    args = arguments(expr)
+    oper = operation(expr)
+    new_expr = clean_f(Symbolics.term(oper, args...), var)
+
+    return (subs, Symbolics.wrap(new_expr))
 end
 
 
@@ -176,5 +204,5 @@ function lead_coeff(expr, var)
 end
 
 @variables x y z
-poly = im*x + 3y + z
+poly = x^3 + x*sqrt(complex(-2)) + 2
 filter_poly(poly, x)

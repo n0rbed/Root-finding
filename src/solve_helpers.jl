@@ -1,21 +1,4 @@
 # general helpers
-function clean_f(filtered_expr)
-    filtered_expr = simplify_fractions(simplify(real(filtered_expr)))
-    unwrapped_f = Symbolics.unwrap(filtered_expr)
-    oper = 0
-    try
-        oper = operation(unwrapped_f)
-    catch e
-        return filtered_expr
-    end
-    if oper === (/)
-        args = unsorted_arguments(unwrapped_f)
-        filtered_expr = Symbolics.wrap(args[1])
-        @info args[2] != 0
-    end
-    return filtered_expr
-end
-
 function get_and_sub_factors(subs, filtered_expr, subbed_factors)
     factors = []
     @variables I

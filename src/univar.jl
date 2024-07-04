@@ -23,7 +23,6 @@ end
 
 function get_roots_deg1(expression, x)
     subs, filtered_expr = filter_poly(expression, x)
-    filtered_expr = simplify(real(filtered_expr))
     coeffs, constant = polynomial_coeffs(filtered_expr , [x])
 
     @assert isequal(Symbolics.degree(filtered_expr, x), 1) "Expected a polynomial of degree 1 in $x, got $expression"
@@ -57,7 +56,6 @@ end
 function get_roots_deg2(expression, x)
     # ax^2 + bx + c = 0
     subs, filtered_expr = filter_poly(expression, x)
-    filtered_expr = simplify(real(filtered_expr))
     coeffs, constant = polynomial_coeffs(filtered_expr, [x])
 
     @assert isequal(Symbolics.degree(filtered_expr, x), 2) "Expected a polynomial of degree 2 in $x, got $expression"
@@ -83,7 +81,6 @@ end
 
 function get_roots_deg3(expression, x)
     subs, filtered_expr = filter_poly(expression, x)
-    filtered_expr = simplify(real(filtered_expr))
     coeffs, constant = polynomial_coeffs(filtered_expr, [x])
 
     @assert isequal(Symbolics.degree(filtered_expr, x), 3) "Expected a polynomial of degree 3 in $x, got $expression"
@@ -126,7 +123,6 @@ end
 
 function get_roots_deg4(expression, x)
     subs, filtered_expr = filter_poly(expression, x)
-    filtered_expr = simplify(real(filtered_expr))
     coeffs, constant = polynomial_coeffs(filtered_expr, [x])
 
     @assert isequal(Symbolics.degree(filtered_expr, x), 4) "Expected a polynomial of degree 4 in $x, got $expression"
@@ -183,12 +179,11 @@ function get_yroots(m, p, q)
     return [root1, root2, root3, root4]
 end
 
-
 function get_roots(expression, x)
     @assert is_singleton(unwrap(x)) "Expected a variable, got $x"
 
     subs, filtered_expr = filter_poly(expression, x)
-    coeffs, constant = polynomial_coeffs(simplify(real(filtered_expr)), [x])
+    coeffs, constant = polynomial_coeffs(filtered_expr, [x])
     @assert isequal(constant, 0) "Expected a polynomial in $x, got $expression"
 
     degree = Symbolics.degree(simplify(real(filtered_expr)), x)
