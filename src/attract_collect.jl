@@ -41,30 +41,29 @@ function isolate(lhs::Num, var)
                 if any(isequal(x, var) for x in vars)
                     continue
                 end
-                lhs = lhs^(1/arg) 
-                rhs = rhs^(1/arg)
+                lhs = Symbolics.term(^, lhs, (1/arg))
+                rhs = Symbolics.term(^, rhs, (1/arg))
             end
 
         elseif oper === (log)
             lhs = args[1]
-            rhs = Base.MathConstants.e^rhs
+            rhs = Symbolics.term(^, Base.MathConstants.e, rhs)
 
         elseif oper === (log2)
             lhs = args[1]
-            rhs = 2^rhs
+            rhs = Symbolics.term(^, 2, rhs)
 
         elseif oper === (log10)
             lhs = args[1]
-            rhs = 10^rhs
+            rhs = Symbolics.term(^, 10, rhs)
 
         elseif oper === (sqrt)
             lhs = args[1]
-            rhs = rhs^2
+            rhs = Symbolics.term(^, rhs, 2)
 
         elseif oper === (cbrt)
             lhs = args[1]
-            rhs = rhs^3
-
+            rhs = Symbolics.term(^, rhs, 3)
         end
 
         lhs = simplify(lhs)

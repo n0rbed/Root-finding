@@ -49,7 +49,6 @@ function solve_univar(expression, x, mult=false)
     catch e
         @warn "" e
     end
-    expression = simplify(expression)
 
     subs, filtered_expr = filter_poly(expression, x)
     filtered_expr = clean_f(filtered_expr)
