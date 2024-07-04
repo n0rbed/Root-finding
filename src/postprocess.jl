@@ -27,7 +27,6 @@ function _postprocess_root(x::Number)
     # N // 1 => N
     if x isa Rational
         if isone(denominator(x))
-            @info x => big(numerator(x))
             return big(numerator(x))
         end
     end
@@ -36,7 +35,6 @@ function _postprocess_root(x::Number)
     if x isa Complex
         if iszero(imag(x))
             # Alex: maybe return _postprocess_root(real(x))
-            @info x => real(x)
             return real(x)
         end
     end
@@ -59,7 +57,6 @@ function _postprocess_root(x::SymbolicUtils.BasicSymbolic)
     if istree(x) && (operation(x) === sqrt || operation(x) === cbrt)
         arg = arguments(x)[1]
         if isequal(arg, 0) || isequal(arg, 1)
-            @info x => arg
             return arg
         end
     end
@@ -68,7 +65,6 @@ function _postprocess_root(x::SymbolicUtils.BasicSymbolic)
     if istree(x) && operation(x) === sqrt
         arg = arguments(x)[1]
         if arg isa Integer && arg == (isqrt(arg))^2
-            @info x => isqrt(arg)
             return isqrt(arg)
         end
     end
@@ -78,7 +74,6 @@ function _postprocess_root(x::SymbolicUtils.BasicSymbolic)
         arg1 = arguments(x)[1]
         if istree(arg1) && operation(arg1) === sqrt
             if _is_const_number(arguments(arg1)[1])
-                @info x => arguments(arg1)[1]
                 return arguments(arg1)[1]
             end
         end
@@ -90,4 +85,14 @@ end
 function postprocess_root(x)
     _postprocess_root(x)
 end
+
+
+# some tests
+SymbolicUtils.@syms __x
+__symsqrt(x) = SymbolicUtils.term(sqrt, x)
+@test postprocess_root(2 // 1) == 2 && postprocess_root(2 + 0*im) == 2
+@test postprocess_root(__symsqrt(__symsqrt(0)) - 11) == -11
+@test postprocess_root(3*__symsqrt(2)^2) == 6
+@test postprocess_root(__symsqrt(4)) == 2
+@test isequal(postprocess_root(__symsqrt(__x)^2), __symsqrt(__x)^2)
 

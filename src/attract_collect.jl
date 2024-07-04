@@ -106,9 +106,48 @@ function nl_solve(lhs::Num, var)
 
 end
 
+function n_func_occ(expr, var)
+    expr = Symbolics.unwrap(expr)
+    !iscall(expr) && return n_occurrences(expr, var)
+    args, cur_oper = Symbolics.arguments(expr), Symbolics.operation(expr)
+    counted_ops = [sin, log, log2, log10, cos, tan, asin, acos, atan]
+    n = 0
+
+
+    if cur_oper === (*) || cur_oper === (+)
+
+        outside = false
+        for arg in args
+            if !iscall(arg) && any(isequal(var, x) for x in Symbolics.get_variables(arg)) && !outside
+                n += 1
+                outside = true
+            end
+            !iscall(arg) && continue
+            oper = operation(arg)
+
+            if any(isequal(oper, op) for op in counted_ops) 
+                n += n_func_occ(arguments(arg)[1], var)
+            elseif n_occurrences(arg, var) > 0 && !outside
+                n += 1
+                outside = true
+            end
+        end
+
+    else
+        for arg in args
+            n += n_func_occ(arg, var)
+        end
+    end
+    
+    return n
+end
+
 function n_occurrences(expr, var)
     n = 0
-    args = unsorted_arguments(Symbolics.unwrap(expr))
+    !iscall(expr) && any(isequal(var, x) for x in Symbolics.get_variables(expr)) && return 1
+    !iscall(expr) && return 0 
+
+    args = Symbolics.arguments(Symbolics.unwrap(expr))
 
     for arg in args
         n += traverse(arg, var)
@@ -135,5 +174,3 @@ function traverse(argument, var)
     end
     return n
 end
-@variables x
-#nl_solve(log(x+1)+log(x-1), x)

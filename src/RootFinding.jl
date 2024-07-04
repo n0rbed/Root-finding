@@ -21,6 +21,7 @@ export gcd_use_nemo
 export check_polynomial
 export nl_solve
 export n_occurrences
+export n_func_occ
 export split_by_variable
 export postprocess_root
 

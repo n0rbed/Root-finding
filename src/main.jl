@@ -1,37 +1,37 @@
 using Symbolics, Groebner, SymbolicUtils
 
-function solve(expr, x, mult=false)
+function solve(expr, x, multiplicities=false)
     type_expr = typeof(expr)
     type_x = typeof(x)
-    expr_uni = false
-    x_uni = false
+    expr_univar = false
+    x_univar = false
 
     if type_expr == Num || type_expr == SymbolicUtils.BasicSymbolic{Real} || 
         type_expr == Complex{Num} || type_expr == Symbolics.ComplexTerm{Real}
-        expr_uni = true
+        expr_univar = true
     end
 
     if (type_x == Num || type_x == SymbolicUtils.BasicSymbolic{Real})
-        x_uni = true
+        x_univar = true
     end
 
 
-    if x_uni
-        @assert is_singleton(unwrap(x)) "Expected a variable, got $x"
+    if x_univar
+        @assert Symbolics.is_singleton(Symbolics.unwrap(x)) "Expected a variable, got $x"
 
-        if expr_uni
-            return solve_univar(expr, x, mult)
+        if expr_univar
+            return solve_univar(expr, x, multiplicities)
         else
-            return solve_multipoly(expr, x, mult)
+            return solve_multipoly(expr, x, multiplicities)
         end
 
     end
 
-    if !expr_uni && !x_uni
+    if !expr_univar && !x_univar
         for var in x
-            @assert is_singleton(unwrap(var)) "Expected a variable, got $x"
+            @assert Symbolics.is_singleton(Symbolics.unwrap(var)) "Expected a variable, got $x"
         end
-        return solve_multivar(expr, x, mult)
+        return solve_multivar(expr, x, multiplicities)
     end
 end
 

@@ -202,7 +202,3 @@ function lead_coeff(expr, var)
     lead_coeff = lead_term(expr, var) / (var^degree)
     return lead_coeff
 end
-
-@variables x y z
-poly = x^3 + x*sqrt(complex(-2)) + 2
-filter_poly(poly, x)
