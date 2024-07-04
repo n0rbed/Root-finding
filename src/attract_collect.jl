@@ -36,13 +36,12 @@ function isolate(lhs::Num, var)
             end
 
         elseif oper === (^)
-            for arg in args
-                vars = Symbolics.get_variables(arg)
-                if any(isequal(x, var) for x in vars)
-                    continue
-                end
-                lhs = Symbolics.term(^, lhs, (1/arg))
-                rhs = Symbolics.term(^, rhs, (1/arg))
+            if any(isequal(x, var) for var in Symbolics.get_variables(args[1]))
+                lhs = Symbolics.term(^, lhs, (1/args[1]))
+                rhs = Symbolics.term(^, rhs, (1/args[1]))
+            else
+                lhs = args[2]
+                rhs = log(rhs) / log(args[1])
             end
 
         elseif oper === (log)
