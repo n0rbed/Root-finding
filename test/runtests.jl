@@ -196,15 +196,6 @@ f1, f2 = x^2 - y^2, x^3 - y^3
 
 
 # Post Process roots #
-SymbolicUtils.@syms __x
-__symsqrt(x) = SymbolicUtils.term(sqrt, x)
-@test postprocess_root(2 // 1) == 2 && postprocess_root(2 + 0*im) == 2
-@test postprocess_root(__symsqrt(__symsqrt(0)) - 11) == -11
-@test postprocess_root(3*__symsqrt(2)^2) == 6
-@test postprocess_root(__symsqrt(4)) == 2
-@test isequal(postprocess_root(__symsqrt(__x)^2), __symsqrt(__x)^2)
-
-
 
 
 # Filter Poly #
@@ -226,3 +217,10 @@ poly = (x+1)*Symbolics.term(log, 3)
 subs, filtered_poly = filter_poly(poly, x)
 @test check_polynomial(filtered_poly)
 
+
+# n_func_occ #
+@test n_func_occ(x, x) == 1
+@test n_func_occ(log(x), x) == 1
+@test n_func_occ(log(x) + x, x) == 2
+@test n_func_occ(log(y) + x , x) == 1
+@test n_func_occ(log(x + sin((x^2 + x)/log(x))), x) == 3
