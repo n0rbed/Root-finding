@@ -2,7 +2,7 @@ module RootFinding
 
 include("coeffs.jl")
 include("nemo_stuff.jl")
-include("nonlinear.jl")
+include("attract_collect.jl")
 include("postprocess.jl")
 include("univar.jl")
 include("solve_helpers.jl")
