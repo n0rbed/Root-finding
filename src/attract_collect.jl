@@ -63,6 +63,24 @@ function isolate(lhs::Num, var)
         elseif oper === (cbrt)
             lhs = args[1]
             rhs = Symbolics.term(^, rhs, 3)
+        elseif oper === (sin)
+            lhs = args[1]
+            rhs = Symbolics.term(asin, rhs)
+        elseif oper === (cos)
+            lhs = args[1]
+            rhs = Symbolics.term(acos, rhs)
+        elseif oper === (tan)
+            lhs = args[1]
+            rhs = Symbolics.term(atan, rhs)
+        elseif oper === (asin)
+            lhs = args[1]
+            rhs = Symbolics.term(sin, rhs)
+        elseif oper === (acos)
+            lhs = args[1]
+            rhs = Symbolics.term(cos, rhs)
+        elseif oper === (atan)
+            lhs = args[1]
+            rhs = Symbolics.term(tan, rhs)
         end
 
         lhs = simplify(lhs)
@@ -95,7 +113,7 @@ function attract_collect(lhs, var)
 
 end
 function nl_solve(lhs::Num, var)
-    nx = n_occurrences(lhs, var)
+    nx = n_func_occ(lhs, var)
     if nx == 0
         throw("Var not present in given expression." )
     elseif nx == 1
