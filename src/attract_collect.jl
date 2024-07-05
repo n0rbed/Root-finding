@@ -84,30 +84,88 @@ function isolate(lhs::Num, var)
         end
 
         lhs = simplify(lhs)
-        rhs = simplify(rhs)
     end
     return Symbolics.wrap(rhs)
 end
 
 
-function attract_collect(lhs, var)
-    @variables x y
-    r_addlogs = @rule log(~x) + log(~y) => log(~x * ~y)
-    unwrapped_lhs = Symbolics.unwrap(lhs)
-    args = unsorted_arguments(unwrapped_lhs)
-    operation = Symbolics.operation(unwrapped_lhs)
+function attract_logs(lhs, var)
+    r_addlogs = convert(Vector{Any}, [@acrule log(~x) + log(~y) => log(~x * ~y)])
+    push!(r_addlogs, @acrule ~z*log(~x) + log(~y) => log((~x)^(~z) * ~y))
+    push!(r_addlogs, @acrule ~z*log(~x) + ~h*log(~y) => log((~x)^(~z) * (~y)^(~h)))
+    args = arguments(Symbolics.unwrap(lhs))
 
     i = 1
     j = i + 1
     while j <= length(args)
-        if Symbolics.operation(args[i]) === (log) && n_occurrences(args[i], var) != 0 && 
-            Symbolics.operation(args[j]) === (log) && n_occurrences(args[j], var) != 0
-            lhs = expand(simplify(lhs, RuleSet([r_addlogs])))
+        initial_sum = args[i] + args[j]
+        if n_occurrences(args[i], var) != 0 && n_occurrences(args[j], var) != 0
+            sum = expand(simplify(initial_sum, RuleSet(r_addlogs)))
+            if !isequal(sum, initial_sum)
+                lhs = lhs - args[i] - args[j] + sum 
+                args = arguments(Symbolics.unwrap(lhs))
+                i = 0
+                j = 1
+            end
         end
         i += 1
         j += 1
     end
-    if n_occurrences(lhs, var) == 1
+
+    return lhs
+end
+
+function arg_contains_log(arg, var)
+    oper = Symbolics.operation(arg)
+    isequal(oper, log) && return true
+
+    if oper == (*)
+        args = Symbolics.arguments(arg)
+        constant_term = 0 
+        log_term = 0
+        for a in args
+            if n_occurrences(a, var) != 0 && Symbolics.operation(a) == log
+                log_term = a
+            end
+            if n_occurrences(a, var) == 0
+                constant_term = a
+            end
+        end
+
+        !isequal(constant_term, 0) && !isequal(log_term, 0) && return true
+    end
+
+    return false
+end
+
+function detect_addlogs(lhs, var)
+    args = Symbolics.arguments(Symbolics.unwrap(lhs))
+    oper = Symbolics.operation(Symbolics.unwrap(lhs))
+    !isequal(oper, (+)) && return false
+    
+    found = [false, false]
+    c = 1
+    for arg in args
+        !iscall(arg) && continue
+        isequal(n_occurrences(arg, var), 0) && continue
+        if arg_contains_log(arg, var) && c < 3
+            found[c] = true
+            c += 1
+        end
+    end
+
+    all(found) && return true
+    return false
+end
+
+function attract_collect(lhs, var)
+    unwrapped_lhs = Symbolics.unwrap(lhs)
+
+    if detect_addlogs(lhs, var)
+        lhs = attract_logs(lhs, var)
+    end
+
+    if n_func_occ(lhs, var) == 1
         return lhs
     end
 
@@ -115,7 +173,7 @@ end
 function nl_solve(lhs::Num, var)
     nx = n_func_occ(lhs, var)
     if nx == 0
-        throw("Var not present in given expression." )
+        throw("Var not present in given expression.")
     elseif nx == 1
         return isolate(lhs, var)
     elseif nx > 1
@@ -141,10 +199,10 @@ function n_func_occ(expr, var)
                 outside = true
             end
             !iscall(arg) && continue
-            oper = operation(arg)
+            oper = Symbolics.operation(arg)
 
             if any(isequal(oper, op) for op in counted_ops) 
-                n += n_func_occ(arguments(arg)[1], var)
+                n += n_func_occ(Symbolics.arguments(arg)[1], var)
             elseif n_occurrences(arg, var) > 0 && !outside
                 n += 1
                 outside = true
@@ -177,7 +235,7 @@ end
 function traverse(argument, var)
     args = []
     try
-        args = unsorted_arguments(argument)
+        args = Symbolics.arguments(argument)
     catch e
         if isequal(argument, var)
             return 1 
@@ -192,3 +250,6 @@ function traverse(argument, var)
     end
     return n
 end
+
+# @variables x
+# nl_solve(2log(x+1) + log(x-1), x)
