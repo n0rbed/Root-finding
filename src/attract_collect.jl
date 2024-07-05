@@ -125,7 +125,13 @@ function arg_contains_log(arg, var)
         log_term = 0
         for a in args
             if n_occurrences(a, var) != 0 && Symbolics.operation(a) == log
-                log_term = a
+                poly = arguments(a)[1]
+                subs, filtered = filter_poly(poly, var)
+                try
+                    check_polynomial(filtered)
+                    log_term = a
+                catch e
+                end
             end
             if n_occurrences(a, var) == 0
                 constant_term = a
