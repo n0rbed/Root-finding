@@ -1,5 +1,4 @@
 using Symbolics
-include("detect_attract.jl")
 
 function isolate(lhs, var)
     rhs = 0
@@ -106,18 +105,31 @@ function attract_logs(lhs, var)
     return lhs
 end
 
+
 function attract_exponential(lhs, var)
+    contains_var(arg) = occursin(string(var), string(arg))
+
+    r_addexpon = Vector{Any}()
+    push!(r_addexpon, @acrule (~b)^(~f::(contains_var)) + (~d)^(~g::(contains_var)) => ~f*Symbolics.term(log, ~b) - ~g*Symbolics.term(log, ~d))
+    push!(r_addexpon, @acrule (~a)*(~b)^(~f::(contains_var)) + (~d)^(~g::(contains_var)) => Symbolics.term(log, -~a) + ~f*Symbolics.term(log, ~b) - ~g*Symbolics.term(log, ~d))
+    push!(r_addexpon, @acrule (~a)*(~b)^(~f::(contains_var)) + (~c)*(~d)^(~g::(contains_var)) => Symbolics.term(log, -(~a)/(~c)) + ~f*Symbolics.term(log, ~b) - ~g*Symbolics.term(log, ~d))
+
+    for r in r_addexpon
+        lhs = SymbolicUtils.Fixpoint(r)(Symbolics.unwrap(lhs))
+    end
+
+    return expand(lhs)
 end
 
 
 function attract_collect(lhs, var)
     unwrapped_lhs = Symbolics.unwrap(lhs)
 
-    if detect_addlogs(lhs, var)
-        lhs = attract_logs(lhs, var)
-    end
     if detect_exponential(lhs, var)
         lhs = attract_exponential(lhs, var)
+    end
+    if detect_addlogs(lhs, var)
+        lhs = attract_logs(lhs, var)
     end
 
     n_func_occ(lhs, var) == 1 && return lhs
@@ -151,6 +163,8 @@ function n_func_occ(expr, var)
 
         outside = false
         for arg in args
+            n_occurrences(arg, var) == 0 && continue
+
             if !iscall(arg) && any(isequal(var, x) for x in Symbolics.get_variables(arg)) && !outside
                 n += 1
                 outside = true
@@ -170,8 +184,6 @@ function n_func_occ(expr, var)
             elseif check_poly_inunivar(arg, var) && !outside 
                 n += 1
                 outside = true
-            elseif oper_arg === (*)
-                n += n_func_occ(arg, var)
             end
         end
 
@@ -221,5 +233,6 @@ end
 # nl_solve(2log(x+1) + log(x-1), x)
 
 @variables x y 
-n_func_occ(2^(x+1) + y*5^(x+3), x)
 # nl_solve(2^(x+1) + 5^(x+3), x)
+
+n_func_occ(expand((1 + x)*Symbolics.term(log, 2) - (3 + x)*Symbolics.term(log, 5)), x)

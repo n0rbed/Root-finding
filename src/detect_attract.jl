@@ -1,5 +1,4 @@
 # ADD LOGS #
-
 function arg_contains_log(arg, var)
     oper = Symbolics.operation(arg)
     isequal(oper, log) && return true
