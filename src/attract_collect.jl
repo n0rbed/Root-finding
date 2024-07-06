@@ -106,6 +106,9 @@ function attract_logs(lhs, var)
     return lhs
 end
 
+function attract_exponential(lhs, var)
+end
+
 
 function attract_collect(lhs, var)
     unwrapped_lhs = Symbolics.unwrap(lhs)
@@ -114,7 +117,7 @@ function attract_collect(lhs, var)
         lhs = attract_logs(lhs, var)
     end
     if detect_exponential(lhs, var)
-        println("EXPON FOUND!!!!")
+        lhs = attract_exponential(lhs, var)
     end
 
     n_func_occ(lhs, var) == 1 && return lhs
