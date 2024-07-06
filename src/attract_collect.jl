@@ -156,16 +156,19 @@ function n_func_occ(expr, var)
             oper = Symbolics.operation(arg)
 
             args_arg = Symbolics.arguments(arg)
-            case_1_pow = Symbolics.operation(arg) == (^) && n_occurrences(args_arg[2], var) == 0  && n_occurrences(args_arg[1], var) != 0
-            case_2_pow = Symbolics.operation(arg) == (^) && n_occurrences(args_arg[2], var) != 0  && n_occurrences(args_arg[1], var) == 0  
+            oper_arg = Symbolics.operation(arg)
+            case_1_pow = oper_arg === (^) && n_occurrences(args_arg[2], var) == 0  && n_occurrences(args_arg[1], var) != 0
+            case_2_pow = oper_arg === (^) && n_occurrences(args_arg[2], var) != 0  && n_occurrences(args_arg[1], var) == 0  
 
             if any(isequal(oper, op) for op in counted_ops)
                 n += n_func_occ(args_arg[1], var)
             elseif case_2_pow
                 n += n_func_occ(args_arg[2], var) 
-            elseif (n_occurrences(arg, var) > 0 || case_1_pow) && !outside 
+            elseif check_poly_inunivar(arg, var) && !outside 
                 n += 1
                 outside = true
+            elseif oper_arg === (*)
+                n += n_func_occ(arg, var)
             end
         end
 
@@ -214,6 +217,6 @@ end
 # @variables x
 # nl_solve(2log(x+1) + log(x-1), x)
 
-@variables x
-n_func_occ(2^(x+1) + 5^(x+3), x)
+@variables x y 
+n_func_occ(2^(x+1) + y*5^(x+3), x)
 # nl_solve(2^(x+1) + 5^(x+3), x)
