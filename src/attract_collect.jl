@@ -1,6 +1,7 @@
 using Symbolics
+include("detect_attract.jl")
 
-function isolate(lhs::Num, var)
+function isolate(lhs, var)
     rhs = 0
     lhs = Symbolics.unwrap(lhs)
     while !isequal(lhs, var)
@@ -90,79 +91,21 @@ end
 
 
 function attract_logs(lhs, var)
-    r_addlogs = convert(Vector{Any}, [@acrule log(~x) + log(~y) => log(~x * ~y)])
-    push!(r_addlogs, @acrule ~z*log(~x) + log(~y) => log((~x)^(~z) * ~y))
-    push!(r_addlogs, @acrule ~z*log(~x) + ~h*log(~y) => log((~x)^(~z) * (~y)^(~h)))
-    args = arguments(Symbolics.unwrap(lhs))
+    contains_var(arg) = occursin(string(var), string(arg))
 
-    i = 1
-    j = i + 1
-    while j <= length(args)
-        initial_sum = args[i] + args[j]
-        if n_occurrences(args[i], var) != 0 && n_occurrences(args[j], var) != 0
-            sum = expand(simplify(initial_sum, RuleSet(r_addlogs)))
-            if !isequal(sum, initial_sum)
-                lhs = lhs - args[i] - args[j] + sum 
-                args = arguments(Symbolics.unwrap(lhs))
-                i = 0
-                j = 1
-            end
-        end
-        i += 1
-        j += 1
+    r_addlogs = Vector{Any}() 
+    push!(r_addlogs, @acrule log(~x::(contains_var)) + log(~y::(contains_var)) => log(~x * ~y))
+    push!(r_addlogs, @acrule ~z*log(~x::(contains_var)) + log(~y::(contains_var)) => log((~x)^(~z) * ~y))
+    push!(r_addlogs, @acrule ~z*log(~x::(contains_var)) + ~h*log(~y::(contains_var)) => log((~x)^(~z) * (~y)^(~h)))
+
+
+    for r in r_addlogs
+        lhs = SymbolicUtils.Fixpoint(r)(Symbolics.unwrap(lhs))
     end
 
     return lhs
 end
 
-function arg_contains_log(arg, var)
-    oper = Symbolics.operation(arg)
-    isequal(oper, log) && return true
-
-    if oper == (*)
-        args = Symbolics.arguments(arg)
-        constant_term = 0 
-        log_term = 0
-        for a in args
-            if n_occurrences(a, var) != 0 && Symbolics.operation(a) == log
-                poly = arguments(a)[1]
-                subs, filtered = filter_poly(poly, var)
-                try
-                    check_polynomial(filtered)
-                    log_term = a
-                catch e
-                end
-            end
-            if n_occurrences(a, var) == 0
-                constant_term = a
-            end
-        end
-
-        !isequal(constant_term, 0) && !isequal(log_term, 0) && return true
-    end
-
-    return false
-end
-
-function detect_addlogs(lhs, var)
-    args = Symbolics.arguments(Symbolics.unwrap(lhs))
-    oper = Symbolics.operation(Symbolics.unwrap(lhs))
-    !isequal(oper, (+)) && return false
-    
-    found = [false, false]
-    c = 1
-    for arg in args
-        !iscall(arg) && continue
-        isequal(n_occurrences(arg, var), 0) && continue
-        if arg_contains_log(arg, var) && c < 3
-            found[c] = true
-            c += 1
-        end
-    end
-
-    all(found) && return true
-    return false
-end
 
 function attract_collect(lhs, var)
     unwrapped_lhs = Symbolics.unwrap(lhs)
@@ -170,12 +113,17 @@ function attract_collect(lhs, var)
     if detect_addlogs(lhs, var)
         lhs = attract_logs(lhs, var)
     end
-
-    if n_func_occ(lhs, var) == 1
-        return lhs
+    if detect_exponential(lhs, var)
+        println("EXPON FOUND!!!!")
     end
 
+    n_func_occ(lhs, var) == 1 && return lhs
+
+    throw("This system cannot be solved with the methods available to nl_solve. Try \
+a numerical method instead.")
+
 end
+
 function nl_solve(lhs::Num, var)
     nx = n_func_occ(lhs, var)
     if nx == 0
@@ -207,9 +155,15 @@ function n_func_occ(expr, var)
             !iscall(arg) && continue
             oper = Symbolics.operation(arg)
 
-            if any(isequal(oper, op) for op in counted_ops) 
-                n += n_func_occ(Symbolics.arguments(arg)[1], var)
-            elseif n_occurrences(arg, var) > 0 && !outside
+            args_arg = Symbolics.arguments(arg)
+            case_1_pow = Symbolics.operation(arg) == (^) && n_occurrences(args_arg[2], var) == 0  && n_occurrences(args_arg[1], var) != 0
+            case_2_pow = Symbolics.operation(arg) == (^) && n_occurrences(args_arg[2], var) != 0  && n_occurrences(args_arg[1], var) == 0  
+
+            if any(isequal(oper, op) for op in counted_ops)
+                n += n_func_occ(args_arg[1], var)
+            elseif case_2_pow
+                n += n_func_occ(args_arg[2], var) 
+            elseif (n_occurrences(arg, var) > 0 || case_1_pow) && !outside 
                 n += 1
                 outside = true
             end
@@ -259,3 +213,7 @@ end
 
 # @variables x
 # nl_solve(2log(x+1) + log(x-1), x)
+
+@variables x
+n_func_occ(2^(x+1) + 5^(x+3), x)
+# nl_solve(2^(x+1) + 5^(x+3), x)
