@@ -252,16 +252,6 @@ function traverse(argument, var)
     return n
 end
 
-# @variables x
-# nl_solve(2log(x+1) + log(x-1), x)
 
 @variables x y 
-# expr = log(x)^2 - 17
-# n_func_occ(expr , x)
 println(n_func_occ(log(y) + x, x))
-
-# nl_solve(2^(x+1) + 5^(x+3), x)
-
-# expr = log(x^10) + log(x) - 1
-# nl_solve(expr, x)
-# n_func_occ(expand((1 + x)*Symbolics.term(log, 2) - (3 + x)*Symbolics.term(log, 5)), x)

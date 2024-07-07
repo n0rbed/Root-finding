@@ -8,30 +8,12 @@ function sub(sub_counter, subs, place_to_sub)
     return sub_counter, place_to_sub
 end
 
-function split_by_variable(f, var)
-    @assert var in Nemo.gens(Nemo.parent(f))
-    F, G = zero(f), []
-    for t in Nemo.terms(f)
-        d = Nemo.degree(t, var)
-        if d > 0
-            push!(G, (d, Nemo.divexact(t, var^d)))
-        else
-            F += t
-        end
-    end
-    return F,G
-end
-
 function clean_f(filtered_expr, var)
     filtered_expr = simplify_fractions(simplify(real(filtered_expr)))
     unwrapped_f = Symbolics.unwrap(filtered_expr)
-    oper = 0
-    try
-        oper = operation(unwrapped_f)
-    catch e
-        @warn "" e
-        return filtered_expr
-    end
+    !iscall(unwrapped_f) && return filtered_expr
+    oper = operation(unwrapped_f)
+
     if oper === (/)
         args = arguments(unwrapped_f)
         if any(isequal(var, x) for x in Symbolics.get_variables(args[2]))

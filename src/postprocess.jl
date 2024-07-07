@@ -13,7 +13,7 @@ using Test
 # Alex: make sure `Num`s are not processed here as they'd break it.
 _is_const_number(x::Number) = true
 function _is_const_number(x::SymbolicUtils.BasicSymbolic)
-    !istree(x) && return false
+    !Symbolics.iscall(x) && return false
     all(_is_const_number, arguments(x))
 end
 
@@ -43,7 +43,7 @@ function _postprocess_root(x::Number)
 end
 
 function _postprocess_root(x::SymbolicUtils.BasicSymbolic)
-    !istree(x) && return x
+    !Symbolics.iscall(x) && return x
 
     x = maketerm(
         typeof(x),
@@ -54,7 +54,7 @@ function _postprocess_root(x::SymbolicUtils.BasicSymbolic)
 
     # sqrt(0), cbrt(0) => 0
     # sqrt(1), cbrt(1) => 1
-    if istree(x) && (operation(x) === sqrt || operation(x) === cbrt)
+    if Symbolics.iscall(x) && (operation(x) === sqrt || operation(x) === cbrt)
         arg = arguments(x)[1]
         if isequal(arg, 0) || isequal(arg, 1)
             return arg
@@ -62,7 +62,7 @@ function _postprocess_root(x::SymbolicUtils.BasicSymbolic)
     end
 
     # sqrt(N^2) => N
-    if istree(x) && operation(x) === sqrt
+    if Symbolics.iscall(x) && operation(x) === sqrt
         arg = arguments(x)[1]
         if arg isa Integer && arg == (isqrt(arg))^2
             return isqrt(arg)
@@ -70,9 +70,9 @@ function _postprocess_root(x::SymbolicUtils.BasicSymbolic)
     end
 
     # (sqrt(N))^2 => N
-    if istree(x) && operation(x) === (^) && isequal(arguments(x)[2], 2)
+    if Symbolics.iscall(x) && operation(x) === (^) && isequal(arguments(x)[2], 2)
         arg1 = arguments(x)[1]
-        if istree(arg1) && operation(arg1) === sqrt
+        if Symbolics.iscall(arg1) && operation(arg1) === sqrt
             if _is_const_number(arguments(arg1)[1])
                 return arguments(arg1)[1]
             end

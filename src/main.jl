@@ -38,7 +38,13 @@ end
 function solve_univar(expression, x, mult=false)
     args = []
     mult_n = 1
-    try
+    expression = Symbolics.unwrap(expression)
+    if isequal(typeof(expression), PolyForm{Real})
+        expression = Symbolics.simplify(expression)
+    end
+
+    # handle multiplicities, i.e. (x+1)^20
+    if Symbolics.iscall(expression)
         exp = Symbolics.unwrap(simplify(expression))
         args = arguments(exp)
         operation = SymbolicUtils.operation(exp)
@@ -46,8 +52,6 @@ function solve_univar(expression, x, mult=false)
             expression = Symbolics.wrap(args[1])
             mult_n = args[2]
         end
-    catch e
-        @warn "" e
     end
 
     subs, filtered_expr = filter_poly(expression, x)
@@ -64,11 +68,9 @@ function solve_univar(expression, x, mult=false)
 
         # multiplicities
         if mult
+            og_arr_roots = deepcopy(arr_roots)
             for i = 1:(mult_n-1)
-                try
-                    push!(arr_roots, arr_roots[1])    
-                catch e
-                end
+                append!(arr_roots, og_arr_roots)    
             end
         end
 
@@ -217,3 +219,7 @@ function solve_multivar(eqs::Vector{Num}, vars::Vector{Num}, mult=false)
     end
     return solutions
 end
+
+@variables x y z
+eqs = [x^2, y, z]
+solve(eqs, [x,y,z])
