@@ -1,4 +1,10 @@
 # ADD LOGS #
+function check_poly_inunivar(poly, var)
+    subs, filtered = filter_poly(poly, var)
+    coeffs, constant = polynomial_coeffs(filtered, [var])
+    return isequal(constant, 0)
+end
+
 function arg_contains_log(arg, var)
     oper = Symbolics.operation(arg)
     isequal(oper, log) && return true
@@ -29,13 +35,6 @@ function detect_addlogs(lhs, var)
     end
 
     return all(found)
-end
-
-function check_poly_inunivar(poly, var)
-    subs, filtered = filter_poly(poly, var)
-    coeffs, constant = polynomial_coeffs(filtered, [var])
-    constant == 0 && return true
-    return false
 end
 
 function find_logandexpon(arg, var, oper, poly_index)

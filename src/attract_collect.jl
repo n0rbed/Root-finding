@@ -6,7 +6,7 @@ function isolate(lhs, var)
     while !isequal(lhs, var)
         try
             subs, poly = filter_poly(lhs-rhs, var)
-            if check_polynomial(Symbolics.wrap(poly))
+            if check_polynomial(Symbolics.wrap(poly)) && n_occurrences(poly, var) > 1
                 return solve(Symbolics.wrap(lhs-rhs), var)
             end
         catch e
@@ -37,11 +37,11 @@ function isolate(lhs, var)
 
         elseif oper === (^)
             if any(isequal(x, var) for var in Symbolics.get_variables(args[1]))
-                lhs = Symbolics.term(^, lhs, (1/args[1]))
-                rhs = Symbolics.term(^, rhs, (1/args[1]))
+                lhs = Symbolics.term(^, lhs, (comp_rational(1, args[2])))
+                rhs = Symbolics.term(^, rhs, (comp_rational(1, args[2])))
             else
                 lhs = args[2]
-                rhs = log(rhs) / log(args[1])
+                rhs = comp_rational(log(rhs), log(args[1]))
             end
 
         elseif oper === (log)
@@ -165,25 +165,48 @@ function n_func_occ(expr, var)
         for arg in args
             n_occurrences(arg, var) == 0 && continue
 
-            if !iscall(arg) && any(isequal(var, x) for x in Symbolics.get_variables(arg)) && !outside
+            if !iscall(arg) && isequal(var, Symbolics.get_variables(expr)[1]) && !outside
                 n += 1
                 outside = true
+                continue
             end
             !iscall(arg) && continue
             oper = Symbolics.operation(arg)
 
             args_arg = Symbolics.arguments(arg)
             oper_arg = Symbolics.operation(arg)
-            case_1_pow = oper_arg === (^) && n_occurrences(args_arg[2], var) == 0  && n_occurrences(args_arg[1], var) != 0
+            case_1_pow = oper_arg === (^) && n_occurrences(args_arg[2], var) == 0  && n_occurrences(args_arg[1], var) != 0 && !check_poly_inunivar(args_arg[1], var)
             case_2_pow = oper_arg === (^) && n_occurrences(args_arg[2], var) != 0  && n_occurrences(args_arg[1], var) == 0  
+            is_var_outside(arg) = check_poly_inunivar(arg, var) && !outside && n_occurrences(arg, var) != 0
 
-            if any(isequal(oper, op) for op in counted_ops)
+            # any transcedental operation and the case:  (weird_transcedental_f(x))^(something)
+            if any(isequal(oper, op) for op in counted_ops) || case_1_pow
                 n += n_func_occ(args_arg[1], var)
+            
+            # the case (some constant)^(f(x))
             elseif case_2_pow
                 n += n_func_occ(args_arg[2], var) 
-            elseif check_poly_inunivar(arg, var) && !outside 
+            
+            # var is outside 'x'+1
+            elseif is_var_outside(arg)
                 n += 1
                 outside = true
+
+            # multiplication cases
+            elseif oper_arg === (*)
+                args_arg = arguments(arg)
+
+                for sub_arg in args_arg
+                    # x*log(2)
+                    if is_var_outside(sub_arg)
+                        n += 1
+                        outside = true
+                    # log(x)*y
+                    elseif !check_poly_inunivar(sub_arg, var)
+                        n += n_func_occ(sub_arg, var)
+                    end
+                end
+
             end
         end
 
@@ -233,6 +256,12 @@ end
 # nl_solve(2log(x+1) + log(x-1), x)
 
 @variables x y 
+# expr = log(x)^2 - 17
+# n_func_occ(expr , x)
+println(n_func_occ(log(y) + x, x))
+
 # nl_solve(2^(x+1) + 5^(x+3), x)
 
-n_func_occ(expand((1 + x)*Symbolics.term(log, 2) - (3 + x)*Symbolics.term(log, 5)), x)
+# expr = log(x^10) + log(x) - 1
+# nl_solve(expr, x)
+# n_func_occ(expand((1 + x)*Symbolics.term(log, 2) - (3 + x)*Symbolics.term(log, 5)), x)

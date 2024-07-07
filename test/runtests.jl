@@ -224,3 +224,14 @@ subs, filtered_poly = filter_poly(poly, x)
 @test n_func_occ(log(x) + x, x) == 2
 @test n_func_occ(log(y) + x , x) == 1
 @test n_func_occ(log(x + sin((x^2 + x)/log(x))), x) == 3
+@test n_func_occ(x^2 + x + x^3) == 1
+@test n_func_occ(log(x)^2 - 17, x) == 1
+@test n_func_occ(2^(x^2 + x) + 5^(x+3), x) == 2
+
+expr = log( log(x) + log(x) ) + log( log(x) + log(x) ) - 11
+@test n_func_occ(expr, x) == 1
+
+# log(2) - 3log(5) + x*log(2) - x*log(5)
+expr = expand((1 + x)*Symbolics.term(log, 2) - (3 + x)*Symbolics.term(log, 5))
+@test n_func_occ(expr, x) == 1
+
