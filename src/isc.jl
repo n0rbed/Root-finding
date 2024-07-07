@@ -110,7 +110,7 @@ function attract_exponential(lhs, var)
     contains_var(arg) = occursin(string(var), string(arg))
 
     r_addexpon = Vector{Any}()
-    push!(r_addexpon, @acrule (~b)^(~f::(contains_var)) + (~d)^(~g::(contains_var)) => ~f*Symbolics.term(log, ~b) - ~g*Symbolics.term(log, ~d))
+    push!(r_addexpon, @acrule (~b)^(~f::(contains_var)) + (~d)^(~g::(contains_var)) => ~f*Symbolics.term(log, ~b) - ~g*Symbolics.term(log, ~d) + Symbolics.term(log, Symbolics.term(complex, -1)))
     push!(r_addexpon, @acrule (~a)*(~b)^(~f::(contains_var)) + (~d)^(~g::(contains_var)) => Symbolics.term(log, -~a) + ~f*Symbolics.term(log, ~b) - ~g*Symbolics.term(log, ~d))
     push!(r_addexpon, @acrule (~a)*(~b)^(~f::(contains_var)) + (~c)*(~d)^(~g::(contains_var)) => Symbolics.term(log, -(~a)/(~c)) + ~f*Symbolics.term(log, ~b) - ~g*Symbolics.term(log, ~d))
 
@@ -221,8 +221,8 @@ end
 
 function n_occurrences(expr, var)
     n = 0
-    !iscall(expr) && any(isequal(var, x) for x in Symbolics.get_variables(expr)) && return 1
-    !iscall(expr) && return 0 
+    !iscall(Symbolics.unwrap(expr)) && any(isequal(var, x) for x in Symbolics.get_variables(expr)) && return 1
+    !iscall(Symbolics.unwrap(expr)) && return 0 
 
     args = Symbolics.arguments(Symbolics.unwrap(expr))
 
@@ -254,4 +254,5 @@ end
 
 
 @variables x y 
-println(n_func_occ(log(y) + x, x))
+
+nl_solve(2^(x+1) + 5^(x+3), x)
