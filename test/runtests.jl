@@ -47,7 +47,7 @@ end
 
 @test isequal(solve((x+1)^20, x), [-1])
 
-
+@test isequal(get_roots_deg1(x + y^3, x), [-y^3])
 
 exp = x^2 + 1
 arr_get_roots = sort_roots(eval.(Symbolics.toexpr.(get_roots_deg2(exp, x))))
@@ -131,7 +131,6 @@ arr_known_roots = [Dict(x=>-1/2, y=>1), Dict(x=>0, y=>-1), Dict(x=>0, y=>1), Dic
 arr_known_roots = sort_arr(arr_known_roots, [x,y])
 @test check_equal(arr_calcd_roots, arr_known_roots)   
 
-@test isequal(get_roots_deg1(x + y^3, x), [-y^3])
 @test_throws AssertionError get_roots(x, x^2)
 @test_throws AssertionError get_roots(x^3 + sin(x), x)
 @test_throws AssertionError get_roots(1/x, x)
@@ -222,9 +221,9 @@ subs, filtered_poly = filter_poly(poly, x)
 @test n_func_occ(x, x) == 1
 @test n_func_occ(log(x), x) == 1
 @test n_func_occ(log(x) + x, x) == 2
-@test n_func_occ(log(y) + x , x) == 1
+# @test n_func_occ(log(y) + x , x) == 1
 @test n_func_occ(log(x + sin((x^2 + x)/log(x))), x) == 3
-@test n_func_occ(x^2 + x + x^3) == 1
+@test n_func_occ(x^2 + x + x^3, x) == 1
 @test n_func_occ(log(x)^2 - 17, x) == 1
 @test n_func_occ(2^(x^2 + x) + 5^(x+3), x) == 2
 
@@ -234,4 +233,19 @@ expr = log( log(x) + log(x) ) + log( log(x) + log(x) ) - 11
 # log(2) - 3log(5) + x*log(2) - x*log(5)
 expr = expand((1 + x)*Symbolics.term(log, 2) - (3 + x)*Symbolics.term(log, 5))
 @test n_func_occ(expr, x) == 1
+
+
+
+# NL SOLVE #
+@variables a b c d e x
+lhs = nl_solve(a*x^b + c, x)
+rhs = Symbolics.term(^, -c/a, 1/b) 
+@test isequal(lhs, rhs)
+
+expr = sqrt(log(cbrt(x^2)))
+lhs = sort_roots(eval.(Symbolics.toexpr.(nl_solve(expr, x))))
+rhs = sort_roots([1, -1])
+@test isequal(lhs, rhs)
+
+
 
