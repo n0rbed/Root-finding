@@ -19,12 +19,15 @@ function solve(expr, x, multiplicities=false)
     if x_univar
         @assert Symbolics.is_singleton(Symbolics.unwrap(x)) "Expected a variable, got $x"
 
+        sols = []
         if expr_univar
-            return solve_univar(expr, x, multiplicities)
+            sols = solve_univar(expr, x, multiplicities)
         else
-            return solve_multipoly(expr, x, multiplicities)
+            sols = solve_multipoly(expr, x, multiplicities)
         end
 
+        sols = map(postprocess_root, sols)
+        return sols
     end
 
     if !expr_univar && !x_univar

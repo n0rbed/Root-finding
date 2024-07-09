@@ -240,7 +240,7 @@ expr = expand((1 + x)*Symbolics.term(log, 2) - (3 + x)*Symbolics.term(log, 5))
 @variables a b c d e x
 lhs = nl_solve(a*x^b + c, x)
 rhs = Symbolics.term(^, -c/a, 1/b) 
-@test isequal(lhs, rhs)
+@test isequal(lhs[1], rhs)
 
 expr = sqrt(log(cbrt(x^2)))
 lhs = sort_roots(eval.(Symbolics.toexpr.(nl_solve(expr, x))))

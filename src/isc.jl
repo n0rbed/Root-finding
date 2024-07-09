@@ -13,7 +13,7 @@ function isolate(lhs, var)
         end
 
         oper = Symbolics.operation(lhs)
-        args = unsorted_arguments(lhs)
+        args = arguments(lhs)
 
         if oper === (+)
             for arg in args
@@ -85,7 +85,7 @@ function isolate(lhs, var)
 
         lhs = simplify(lhs)
     end
-    return Symbolics.wrap(rhs)
+    return [postprocess_root(Symbolics.wrap(rhs))]
 end
 
 
@@ -139,7 +139,7 @@ a numerical method instead.")
 
 end
 
-function nl_solve(lhs::Num, var)
+function nl_solve(lhs, var)
     nx = n_func_occ(lhs, var)
     if nx == 0
         throw("Var not present in given expression.")
@@ -253,6 +253,6 @@ function traverse(argument, var)
 end
 
 
-@variables x y 
+# @variables x y 
 
-nl_solve(2^(x+1) + 5^(x+3), x)
+# nl_solve(2^(x+1) + 5^(x+3), x)
