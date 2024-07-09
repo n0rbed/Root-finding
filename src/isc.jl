@@ -1,7 +1,7 @@
 using Symbolics
 
 function isolate(lhs, var)
-    rhs = 0
+    rhs = [0]
     lhs = Symbolics.unwrap(lhs)
     while !isequal(lhs, var)
         try
@@ -15,6 +15,7 @@ function isolate(lhs, var)
         oper = Symbolics.operation(lhs)
         args = arguments(lhs)
 
+        # TODO: add / oper
         if oper === (+)
             for arg in args
                 vars = Symbolics.get_variables(arg)
@@ -22,7 +23,7 @@ function isolate(lhs, var)
                     continue
                 end
                 lhs = lhs - arg
-                rhs = rhs - arg
+                rhs = map(sol -> sol - arg, rhs)
             end
 
         elseif oper === (*)
@@ -32,60 +33,69 @@ function isolate(lhs, var)
                     continue
                 end
                 lhs = lhs / arg
-                rhs = rhs / arg
+                rhs = map(sol -> sol/arg, rhs)
             end
 
         elseif oper === (^)
-            if any(isequal(x, var) for var in Symbolics.get_variables(args[1]))
-                lhs = Symbolics.term(^, lhs, (comp_rational(1, args[2])))
-                rhs = Symbolics.term(^, rhs, (comp_rational(1, args[2])))
+            if any(isequal(x, var) for x in Symbolics.get_variables(args[1])) && all(!isequal(x, var) for x in Symbolics.get_variables(args[2]))
+                lhs = args[1]
+                rhs = map(sol -> Symbolics.term(^, sol, 1//args[2]), rhs)
+                if args[2] isa Int64 && iseven(args[2])
+                    append!(rhs, map(sol -> -sol, rhs))
+                end
             else
                 lhs = args[2]
-                rhs = comp_rational(log(rhs), log(args[1]))
+                rhs = map(sol -> log(sol)//log(args[1]), rhs)
             end
 
         elseif oper === (log)
             lhs = args[1]
-            rhs = Symbolics.term(^, Base.MathConstants.e, rhs)
+            rhs = map(sol -> Symbolics.term(^, Base.MathConstants.e, sol), rhs)
 
         elseif oper === (log2)
             lhs = args[1]
-            rhs = Symbolics.term(^, 2, rhs)
+            rhs = map(sol -> Symbolics.term(^, 2, sol), rhs)
 
         elseif oper === (log10)
             lhs = args[1]
-            rhs = Symbolics.term(^, 10, rhs)
+            rhs = map(sol -> Symbolics.term(^, 10, sol), rhs)
 
         elseif oper === (sqrt)
             lhs = args[1]
-            rhs = Symbolics.term(^, rhs, 2)
+            rhs = map(sol -> Symbolics.term(^, sol, 2), rhs)
 
         elseif oper === (cbrt)
             lhs = args[1]
-            rhs = Symbolics.term(^, rhs, 3)
+            rhs = map(sol -> Symbolics.term(^, sol, 3), rhs)
+
         elseif oper === (sin)
             lhs = args[1]
-            rhs = Symbolics.term(asin, rhs)
+            rhs = map(sol -> Symbolics.term(asin, sol), rhs)
+
         elseif oper === (cos)
             lhs = args[1]
-            rhs = Symbolics.term(acos, rhs)
+            rhs = map(sol -> Symbolics.term(acos, sol), rhs)
+
         elseif oper === (tan)
             lhs = args[1]
-            rhs = Symbolics.term(atan, rhs)
+            rhs = map(sol -> Symbolics.term(atan, sol), rhs)
+
         elseif oper === (asin)
             lhs = args[1]
-            rhs = Symbolics.term(sin, rhs)
+            rhs = map(sol -> Symbolics.term(sin, sol), rhs)
+
         elseif oper === (acos)
             lhs = args[1]
-            rhs = Symbolics.term(cos, rhs)
+            rhs = map(sol -> Symbolics.term(cos, sol), rhs)
+
         elseif oper === (atan)
             lhs = args[1]
-            rhs = Symbolics.term(tan, rhs)
+            rhs = map(sol -> Symbolics.term(tan, sol), rhs)
         end
 
         lhs = simplify(lhs)
     end
-    return [postprocess_root(Symbolics.wrap(rhs))]
+    return map(postprocess_root, rhs)
 end
 
 
@@ -253,6 +263,9 @@ function traverse(argument, var)
 end
 
 
-# @variables x y 
 
+@variables x y 
+nl_solve(x + 2, x)
+
+# nl_solve(expr, x)
 # nl_solve(2^(x+1) + 5^(x+3), x)

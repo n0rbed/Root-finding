@@ -34,7 +34,7 @@ function solve(expr, x, multiplicities=false)
         for var in x
             @assert Symbolics.is_singleton(Symbolics.unwrap(var)) "Expected a variable, got $x"
         end
-            
+
         sols = solve_multivar(expr, x, multiplicities)
         for sol in sols
             for var in x
@@ -236,3 +236,4 @@ end
 @variables x y z
 eqs = [x^2, y, z]
 solve(eqs, [x,y,z])
+

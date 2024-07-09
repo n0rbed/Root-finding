@@ -5,9 +5,9 @@ include("nemo_stuff.jl")
 include("postprocess.jl")
 include("univar.jl")
 include("solve_helpers.jl")
-include("main.jl")
 include("detect_attract.jl")
 include("isc.jl")
+include("main.jl")
 
 export solve
 export get_roots

@@ -8,7 +8,7 @@ function sub(sub_counter, subs, place_to_sub)
     return sub_counter, place_to_sub
 end
 
-function clean_f(filtered_expr, var)
+function clean_f(filtered_expr, var, subs)
     filtered_expr = simplify_fractions(simplify(real(filtered_expr)))
     unwrapped_f = Symbolics.unwrap(filtered_expr)
     !iscall(unwrapped_f) && return filtered_expr
@@ -20,7 +20,7 @@ function clean_f(filtered_expr, var)
             return filtered_expr
         end
         filtered_expr = Symbolics.wrap(args[1])
-        @info args[2] != 0
+        @info substitute(args[2], subs, fold=false) != 0
     end
     return filtered_expr
 end
@@ -158,10 +158,10 @@ function filter_poly(og_expr, var)
         end
     end
 
-    # reassemble expr to avoid memory issue
+    # reassemble expr to avoid variables remembering original values issue
     args = arguments(expr)
     oper = operation(expr)
-    new_expr = clean_f(Symbolics.term(oper, args...), var)
+    new_expr = clean_f(Symbolics.term(oper, args...), var, subs)
 
     return (subs, Symbolics.wrap(new_expr))
 end
