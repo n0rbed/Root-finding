@@ -34,7 +34,15 @@ function solve(expr, x, multiplicities=false)
         for var in x
             @assert Symbolics.is_singleton(Symbolics.unwrap(var)) "Expected a variable, got $x"
         end
-        return solve_multivar(expr, x, multiplicities)
+            
+        sols = solve_multivar(expr, x, multiplicities)
+        for sol in sols
+            for var in x
+                sol[var] = postprocess_root(sol[var])
+            end
+        end
+
+        return sols 
     end
 end
 
@@ -217,9 +225,11 @@ function solve_multivar(eqs::Vector{Num}, vars::Vector{Num}, mult=false)
         end
     end
 
+    pop!(vars)
     for roots in solutions
         delete!(roots, HAT)
     end
+
     return solutions
 end
 
