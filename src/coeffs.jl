@@ -1,11 +1,13 @@
 using Symbolics 
 
-function sub(sub_counter, subs, place_to_sub)
-    sub_var = Symbolics.variables("c"*string(sub_counter))[1]
+function sub(subs, place_to_sub)
+    sub_var = gensym()
+    sub_var = (@variables $sub_var)[1]
+
     subs[sub_var] = deepcopy(place_to_sub)
     place_to_sub = sub_var.val
-    sub_counter += 1
-    return sub_counter, place_to_sub
+
+    return place_to_sub
 end
 
 function clean_f(filtered_expr, var, subs)
@@ -30,39 +32,15 @@ function filter_stuff(expr)
     if isequal(type_expr, Int64) || isequal(type_expr, Rational{Int64})
         return Dict(), expr
     else
-        # to do
-        sub_var = Symbolics.variables("c1")[1]
-        if isequal(expr, true)
-            expr = 1
-        end
-        subs = Dict{Any, Any}(sub_var=>expr)
-        return subs, sub_var.val
+        # TODO:  
+        expr = isequal(expr, true) ? 1 : expr
+        subs = Dict{Any, Any}()
+
+        expr = sub(subs, expr)
+        return subs, expr 
     end
 end
 
-function merge_filtered_exprs(subs1, expr1, subs2, expr2)
-    sub_counter = length(subs1)+1
-    og_subs2 = deepcopy(subs2)
-    if length(subs1) == 0 
-        return subs2, expr2
-    end
-    for (var, sub) in og_subs2
-        sub_var = Symbolics.variables("n"*string(sub_counter))[1]
-        expr2 = Symbolics.substitute(expr2, Dict(var=>sub_var), fold=false)
-        pop!(subs2, var)
-        subs2[sub_var] = sub
-        sub_counter += 1
-    end
-    og_subs2 = deepcopy(subs2)
-    for (var, sub) in og_subs2
-        sub_var = Symbolics.variables("c"*string(var)[2:end])[1]
-        expr2 = Symbolics.substitute(expr2, Dict(var=>sub_var), fold=false)
-        pop!(subs2, var)
-        subs2[sub_var] = sub
-    end
-    merged_subs = Dict(subs1..., subs2...)
-    return merged_subs, expr2
-end
 
 function filter_poly(og_expr, var)
     expr = deepcopy(og_expr)
@@ -75,31 +53,29 @@ function filter_poly(og_expr, var)
     end
 
     args = arguments(expr)
+
     if isequal(typeof(expr), Symbolics.ComplexTerm{Real})
         subs1, subs2 = Dict(), Dict()
         expr1, expr2 = 0, 0
+
         if !isequal(expr.re, false)
             subs1, expr1 = filter_poly(expr.re, var)
         end
         if !isequal(expr.im, false)
             subs2, expr2 = filter_poly(expr.im, var)
         end
-        
-        merged_subs, expr2 = merge_filtered_exprs(subs1, expr1, subs2, expr2)
-        vars = union!(collect(keys(subs1)), collect(keys(subs2)),
-        Symbolics.get_variables(expr1), Symbolics.get_variables(expr2))
-        c = 0
-        i_var = Symbolics.variables("I"*string(c))[1]
-        while any(isequal(i_var, present_var) for present_var in vars)
-            c += 1
-            i_var = Symbolics.variables("I"*string(c))[1]
-        end
-        merged_subs[i_var] = im
+
+        subs = merge(subs1, subs2)
+        i_var = gensym()
+        i_var = (@variables $i_var)[1]
+
+        subs[i_var] = im
         expr = expr1 + i_var*expr2
-        return merged_subs, expr
+
+        return subs, expr
     end
+
     subs = Dict{Any, Any}()
-    sub_counter = 1
     for (i, arg) in enumerate(args)
         # handle constants
         vars = Symbolics.get_variables(arg)
@@ -108,7 +84,7 @@ function filter_poly(og_expr, var)
             if type_arg == Int64 || type_arg == Rational{Int64}
                 continue
             end
-            sub_counter, args[i] = sub(sub_counter, subs, args[i])
+            args[i] = sub(subs, args[i])
             continue
         end
 
@@ -129,8 +105,7 @@ function filter_poly(og_expr, var)
             subs1, monomial[1] = filter_poly(monomial[1], var)
             subs2, monomial[2] = filter_poly(monomial[2], var)
 
-            new_subs, monomial[2] = merge_filtered_exprs(subs1, monomial[1], subs2, monomial[2])
-            subs, args[i] = merge_filtered_exprs(subs, expr, new_subs, arg)
+            merge!(subs, merge(subs1, subs2))
             continue
         end
 
@@ -144,18 +119,15 @@ function filter_poly(og_expr, var)
                 end
                 # filter each arg and then merge
                 new_subs, monomial[j] = filter_poly(monomial[j], var)
-                subs_of_monom, monomial[j] = merge_filtered_exprs(subs_of_monom, arg, new_subs, monomial[j])
+                merge!(subs_of_monom, new_subs)
             end
-            subs, args[i] = merge_filtered_exprs(subs, expr, subs_of_monom, arg)
+            merge!(subs, subs_of_monom)
         end
 
         if oper === (/) || oper === (+)
             for (j, x) in enumerate(monomial)
                 new_subs, new_filtered = filter_poly(monomial[j], var)
-                subs, monomial[j] = merge_filtered_exprs(subs, expr, new_subs, new_filtered)
-                if typeof(monomial[j]) == Num
-                    monomial[j] = monomial[j].val
-                end
+                merge!(subs, new_subs)
             end
         end
     end

@@ -50,9 +50,7 @@ function solve_univar(expression, x, mult=false)
     args = []
     mult_n = 1
     expression = Symbolics.unwrap(expression)
-    if isequal(typeof(expression), PolyForm{Real})
-        expression = Symbolics.simplify(expression)
-    end
+    expression = expression isa PolyForm ? SymbolicUtils.toterm(expression) : expression
 
     # handle multiplicities, i.e. (x+1)^20
     if Symbolics.iscall(expression)
@@ -68,9 +66,10 @@ function solve_univar(expression, x, mult=false)
     subs, filtered_expr = filter_poly(expression, x)
 
     degree = Symbolics.degree(filtered_expr, x)
-    u, subbed_factors = factor_use_nemo(Symbolics.wrap(filtered_expr))
-    subbed_factors = convert(Vector{Any}, subbed_factors)
-    factors = get_and_sub_factors(subs, filtered_expr, subbed_factors)
+    u, factors = factor_use_nemo(Symbolics.wrap(filtered_expr))
+    factors = convert(Vector{Any}, factors)
+
+    factors_subbed = map(factor -> ssubs(factor, subs), factors)
 
     arr_roots = []
 
@@ -89,9 +88,9 @@ function solve_univar(expression, x, mult=false)
     end
 
     if length(factors) != 1
-        @assert isequal(expand(filtered_expr - u*expand(prod(subbed_factors))), 0)
+        @assert isequal(expand(filtered_expr - u*expand(prod(factors))), 0)
 
-        for factor in factors
+        for factor in factors_subbed
             roots = solve_univar(factor, x, mult)
             if isequal(typeof(roots), RootsOf)
                 push!(arr_roots, roots)

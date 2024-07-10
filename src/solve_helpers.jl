@@ -1,28 +1,25 @@
 # general helpers
-function get_and_sub_factors(subs, filtered_expr, subbed_factors)
-    factors = []
-    @variables I
-    if any(isequal(I, var) for var in collect(keys(subs)))
-        u, factors = factor_use_nemo_and_split(filtered_expr, I)
-        delete!(subs, I)
+function ssubs(expr, dict)
+    if haskey(dict, expr)
+        return dict[expr]
+    end
+    expr = Symbolics.unwrap(expr)
+    if iscall(expr)
+        op = ssubs(Symbolics.operation(expr), dict)
+        args = map(Symbolics.arguments(expr)) do x
+            ssubs(x, dict)
+        end
+        op(Symbolics.wrap.(args)...)
     else
-        factors = deepcopy(subbed_factors)
+        return expr
     end
-
-
-    # sub into factors 
-    for i = 1:length(factors)
-        factors[i] = Symbolics.substitute(factors[i], subs, fold=false)
-    end
-
-    return factors
 end
+
 
 struct RootsOf
     poly::Num
 end
 Base.show(io::IO, r::RootsOf) = print(io, "roots_of(", r.poly, ")")
-
 
 
 # multivar stuff
