@@ -15,7 +15,6 @@ function ssubs(expr, dict)
     end
 end
 
-
 struct RootsOf
     poly::Num
 end
