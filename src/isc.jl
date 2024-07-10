@@ -15,7 +15,6 @@ function isolate(lhs, var)
         oper = Symbolics.operation(lhs)
         args = arguments(lhs)
 
-        # TODO: add / oper
         if oper === (+)
             for arg in args
                 vars = Symbolics.get_variables(arg)
@@ -35,6 +34,21 @@ function isolate(lhs, var)
                 lhs = lhs / arg
                 rhs = map(sol -> sol/arg, rhs)
             end
+
+        # TODO: add / oper
+        elseif oper === (/)
+            var_innumerator = any(isequal(x, var) for x in Symbolics.get_variables(args[1]))
+            if var_innumerator
+                # x / 2 = y
+                lhs = args[1]
+                rhs = map(sol -> sol*args[2], rhs)
+            else
+                # 2 / x = y
+                lhs = args[2]
+                rhs = map(sol -> args[1]//sol, rhs)
+            end
+
+
 
         elseif oper === (^)
             if any(isequal(x, var) for x in Symbolics.get_variables(args[1])) && all(!isequal(x, var) for x in Symbolics.get_variables(args[2]))
@@ -197,10 +211,16 @@ function n_func_occ(expr, var)
             elseif case_2_pow
                 n += n_func_occ(args_arg[2], var) 
             
+                
             # var is outside 'x'+1
             elseif is_var_outside(arg)
                 n += 1
                 outside = true
+
+            # n(2 / x) = 1; n(x/x^2) = 2?
+            elseif oper_arg === (/)
+                n += n_func_occ(args_arg[1], var)
+                n += n_func_occ(args_arg[2], var)
 
             # multiplication cases
             elseif oper_arg === (*)
@@ -265,7 +285,10 @@ end
 
 
 @variables x y 
-nl_solve(x + 2, x)
+# nl_solve(x/5 + 3x^2, x)
 
+
+# nl_solve(x + 2, x)
 # nl_solve(expr, x)
 # nl_solve(2^(x+1) + 5^(x+3), x)
+ 

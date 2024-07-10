@@ -19,7 +19,7 @@ function clean_f(filtered_expr, var, subs)
         if any(isequal(var, x) for x in Symbolics.get_variables(args[2]))
             return filtered_expr
         end
-        filtered_expr = Symbolics.wrap(args[1])
+        filtered_expr = args[1]
         @info substitute(args[2], subs, fold=false) != 0
     end
     return filtered_expr
@@ -36,7 +36,7 @@ function filter_stuff(expr)
             expr = 1
         end
         subs = Dict{Any, Any}(sub_var=>expr)
-        return subs, Symbolics.wrap(sub_var)
+        return subs, sub_var.val
     end
 end
 
@@ -68,12 +68,8 @@ function filter_poly(og_expr, var)
     expr = deepcopy(og_expr)
     expr = Symbolics.unwrap(expr)
     vars = Symbolics.get_variables(expr)
-    if !isequal(vars, []) && length(vars) == 1 && !isequal(vars[1], var)
-        subs = Dict{Num, Any}()
-        sub_counter, expr = sub(1, subs, expr)
-        return (subs, Symbolics.wrap(expr))
-    elseif !isequal(vars, []) && isequal(vars[1], expr)
-        return (Dict{Any, Any}(), Symbolics.wrap(expr))
+    if !isequal(vars, []) && isequal(vars[1], expr)
+        return (Dict{Any, Any}(), expr)
     elseif isequal(vars, [])
         return filter_stuff(expr)
     end
@@ -100,7 +96,7 @@ function filter_poly(og_expr, var)
         end
         merged_subs[i_var] = im
         expr = expr1 + i_var*expr2
-        return merged_subs, Symbolics.wrap(expr)
+        return merged_subs, expr
     end
     subs = Dict{Any, Any}()
     sub_counter = 1
@@ -112,16 +108,13 @@ function filter_poly(og_expr, var)
             if type_arg == Int64 || type_arg == Rational{Int64}
                 continue
             end
-            sub_counter, args[i] = deepcopy(sub(sub_counter, subs, args[i]))
+            sub_counter, args[i] = sub(sub_counter, subs, args[i])
             continue
         end
 
         # handle "x" as an argument
         if length(vars) == 1
-            if isequal(arg, var)
-                continue
-            elseif isequal(vars[1], arg)
-                sub_counter, args[i] = sub(sub_counter, subs, args[i])
+            if isequal(arg, var) || isequal(vars[1], arg)
                 continue
             end
         end
@@ -132,19 +125,28 @@ function filter_poly(og_expr, var)
             if any(arg -> isequal(arg, var), monomial) 
                 continue
             end
-            sub_counter, args[i] = sub(sub_counter, subs, args[i])
+            # filter(args[1]), filter[args[2]] and then merge
+            subs1, monomial[1] = filter_poly(monomial[1], var)
+            subs2, monomial[2] = filter_poly(monomial[2], var)
+
+            new_subs, monomial[2] = merge_filtered_exprs(subs1, monomial[1], subs2, monomial[2])
+            subs, args[i] = merge_filtered_exprs(subs, expr, new_subs, arg)
             continue
         end
 
         if oper === (*)
+            subs_of_monom = Dict{Any, Any}()
             for (j, x) in enumerate(monomial)
                 type_x = typeof(x)
                 vars = Symbolics.get_variables(x)
                 if (!isequal(vars, []) && isequal(vars[1], var))  || isequal(type_x, Int64) || isequal(type_x, Rational{Int64})
                     continue
                 end
-                sub_counter, monomial[j] = sub(sub_counter, subs, monomial[j])
+                # filter each arg and then merge
+                new_subs, monomial[j] = filter_poly(monomial[j], var)
+                subs_of_monom, monomial[j] = merge_filtered_exprs(subs_of_monom, arg, new_subs, monomial[j])
             end
+            subs, args[i] = merge_filtered_exprs(subs, expr, subs_of_monom, arg)
         end
 
         if oper === (/) || oper === (+)
@@ -163,7 +165,7 @@ function filter_poly(og_expr, var)
     oper = operation(expr)
     new_expr = clean_f(Symbolics.term(oper, args...), var, subs)
 
-    return (subs, Symbolics.wrap(new_expr))
+    return (subs, new_expr)
 end
 
 
@@ -184,3 +186,8 @@ function lead_coeff(expr, var)
     lead_coeff = lead_term(expr, var) / (var^degree)
     return lead_coeff
 end
+
+@variables m x a
+# filter_poly(a^10 + x, x)
+expr = (BigInt(1)//1) - (BigInt(12)//1)*m + (BigInt(4)//1)*(m^2)
+filter_poly(expr, x)

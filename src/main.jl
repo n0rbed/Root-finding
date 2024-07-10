@@ -68,7 +68,7 @@ function solve_univar(expression, x, mult=false)
     subs, filtered_expr = filter_poly(expression, x)
 
     degree = Symbolics.degree(filtered_expr, x)
-    u, subbed_factors = factor_use_nemo(filtered_expr)
+    u, subbed_factors = factor_use_nemo(Symbolics.wrap(filtered_expr))
     subbed_factors = convert(Vector{Any}, subbed_factors)
     factors = get_and_sub_factors(subs, filtered_expr, subbed_factors)
 
@@ -233,7 +233,9 @@ function solve_multivar(eqs::Vector{Num}, vars::Vector{Num}, mult=false)
     return solutions
 end
 
-@variables x y z
-eqs = [x^2, y, z]
-solve(eqs, [x,y,z])
+@variables x a
+# get_roots_deg4(x^4 - 3x^2 +2, x)
+# solve(x^10 - a^10, x)
+#  eqs = [x^2, y, z]
+#  solve(eqs, [x,y,z])
 

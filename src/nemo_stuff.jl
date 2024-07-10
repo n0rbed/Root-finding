@@ -22,7 +22,8 @@ end
 
 # Checks that the expression is a polynomial with integer or rational
 # coefficients
-function check_polynomial(poly::Num)
+function check_polynomial(poly)
+    poly = Symbolics.wrap(poly)
     vars = Symbolics.get_variables(poly)
     distr, rem = Symbolics.polynomial_coeffs(poly, vars)
     @assert isequal(rem, 0) "Not a polynomial"

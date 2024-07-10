@@ -1,4 +1,5 @@
 # ADD LOGS #
+
 function check_poly_inunivar(poly, var)
     subs, filtered = filter_poly(poly, var)
     coeffs, constant = polynomial_coeffs(filtered, [var])

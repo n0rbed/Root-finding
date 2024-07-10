@@ -238,9 +238,9 @@ expr = expand((1 + x)*Symbolics.term(log, 2) - (3 + x)*Symbolics.term(log, 5))
 
 # NL SOLVE #
 @variables a b c d e x
-lhs = nl_solve(a*x^b + c, x)
-rhs = Symbolics.term(^, -c/a, 1/b) 
-@test isequal(lhs[1], rhs)
+lhs = nl_solve(a*x^b + c, x)[1]
+rhs = Symbolics.term(^, -c.val/a.val, 1/b.val) 
+@test isequal(lhs, rhs)
 
 expr = sqrt(log(cbrt(x^2)))
 lhs = sort_roots(eval.(Symbolics.toexpr.(nl_solve(expr, x))))
