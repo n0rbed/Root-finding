@@ -14,7 +14,7 @@ function sub(subs, place_to_sub)
 end
 
 function clean_f(filtered_expr, var, subs)
-    filtered_expr = simplify_fractions(simplify(real(filtered_expr)))
+    filtered_expr = (simplify(real(filtered_expr)))
     unwrapped_f = Symbolics.unwrap(filtered_expr)
     !iscall(unwrapped_f) && return filtered_expr
     oper = operation(unwrapped_f)
@@ -31,9 +31,8 @@ function clean_f(filtered_expr, var, subs)
 end
 
 function filter_stuff(expr)
-    type_expr = typeof(expr)
 
-    if type_expr isa Integer || type_expr isa Rational
+    if expr isa Integer || expr isa Rational
         return Dict(), expr
 
     else
@@ -45,12 +44,9 @@ function filter_stuff(expr)
     end
 end
 
-
-function filter_poly(og_expr, var)
-    expr = deepcopy(og_expr)
+function filter_subexpr(expr, var)
     expr = Symbolics.unwrap(expr)
     vars = Symbolics.get_variables(expr)
-    friends = []
     if !isequal(vars, []) && isequal(vars[1], expr)
         return (Dict{Any, Any}(), expr)
     elseif isequal(vars, [])
@@ -58,16 +54,15 @@ function filter_poly(og_expr, var)
     end
 
     args = arguments(expr)
-
     if isequal(typeof(expr), Symbolics.ComplexTerm{Real})
         subs1, subs2 = Dict(), Dict()
         expr1, expr2 = 0, 0
 
         if !isequal(expr.re, 0)
-            subs1, expr1 = filter_poly(expr.re, var)
+            subs1, expr1 = filter_subexpr(expr.re, var)
         end
         if !isequal(expr.im, 0)
-            subs2, expr2 = filter_poly(expr.im, var)
+            subs2, expr2 = filter_subexpr(expr.im, var)
         end
 
         # Alex: shouldn't the variable name for im be fixed?
@@ -79,20 +74,19 @@ function filter_poly(og_expr, var)
         i_var = (@variables $i_var)[1]
 
         subs[i_var] = im
-        expr = expr1 + i_var*expr2
+        expr = Symbolics.unwrap(expr1 + i_var*expr2)
 
-        return subs, expr
+        args = arguments(expr)
+        oper = operation(expr)
+        return subs, Symbolics.term(oper, args...)
     end
 
     subs = Dict{Any, Any}()
     for (i, arg) in enumerate(args)
         # handle constants
         vars = Symbolics.get_variables(arg)
-        type_arg = typeof(arg)
         if isequal(vars, [])
-            # Alex: what about Int8, UInt8, Int16, BigInt, etc ?
-            # Yassin: I think this change covers most of them?
-            if type_arg isa Integer || type_arg isa Rational
+            if arg isa Integer || arg isa Rational
                 continue
             end
             args[i] = sub(subs, args[i])
@@ -113,8 +107,8 @@ function filter_poly(og_expr, var)
                 continue
             end
             # filter(args[1]), filter[args[2]] and then merge
-            subs1, monomial[1] = filter_poly(monomial[1], var)
-            subs2, monomial[2] = filter_poly(monomial[2], var)
+            subs1, monomial[1] = filter_subexpr(monomial[1], var)
+            subs2, monomial[2] = filter_subexpr(monomial[2], var)
 
             merge!(subs, merge(subs1, subs2))
             continue
@@ -129,7 +123,7 @@ function filter_poly(og_expr, var)
                     continue
                 end
                 # filter each arg and then merge
-                new_subs, monomial[j] = filter_poly(monomial[j], var)
+                new_subs, monomial[j] = filter_subexpr(monomial[j], var)
                 merge!(subs_of_monom, new_subs)
             end
             merge!(subs, subs_of_monom)
@@ -137,20 +131,59 @@ function filter_poly(og_expr, var)
 
         if oper === (/) || oper === (+)
             for (j, x) in enumerate(monomial)
-                new_subs, new_filtered = filter_poly(monomial[j], var)
+                new_subs, new_filtered = filter_subexpr(monomial[j], var)
                 merge!(subs, new_subs)
             end
         end
     end
 
-    # reassemble expr to avoid variables remembering original values issue
     args = arguments(expr)
     oper = operation(expr)
-    new_expr = clean_f(Symbolics.term(oper, args...), var, subs)
-
-    return (subs, new_expr)
+    expr = Symbolics.term(oper, args...)
+    return subs, expr
 end
 
+function filter_poly(og_expr, var)
+    expr = deepcopy(og_expr)
+    expr = Symbolics.unwrap(expr)
+    vars = Symbolics.get_variables(expr)
+    if !isequal(vars, []) && isequal(vars[1], expr)
+        return (Dict{Any, Any}(), expr)
+    elseif isequal(vars, [])
+        return filter_stuff(expr)
+    end
+
+    subs, expr = filter_subexpr(expr, var)
+
+    # reassemble expr to avoid variables remembering original values issue
+    # CANT DO THIS FOR EVERY RECURSION ALONE, HAVE TO BE AT FINAL STAGE OF FILTER_POLY ONLY
+    args = arguments(expr)
+    oper = operation(expr)
+    #new_expr = clean_f(Symbolics.term(oper, args...), var, subs)
+
+    return subs, expr
+end
+
+
+function sdegree(coeffs, var)
+    degree = 0
+    vars = collect(keys(coeffs))
+    for n in vars
+        isequal(n, 1) && continue
+        isequal(n, var) && degree > 1 && continue
+
+        if isequal(n, var) && degree < 1 
+            degree = 1
+            continue
+        end
+
+        args = arguments(n)
+        if args[2] > degree 
+            degree = args[2]
+        end
+    end
+    return degree
+end
 
 function lead_term(expr, var)
     subs, expr = filter_poly(expr, var)
@@ -170,7 +203,3 @@ function lead_coeff(expr, var)
     return lead_coeff
 end
 
-@variables m x a
-# filter_poly(a^10 + x, x)
-expr = (BigInt(1)//1) - (BigInt(12)//1)*m + (BigInt(4)//1)*(m^2)
-filter_poly(expr, x)

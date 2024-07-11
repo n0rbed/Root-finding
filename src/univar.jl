@@ -1,10 +1,5 @@
 using Symbolics
 import Symbolics: is_singleton, unwrap
-include("coeffs.jl")
-include("nemo_stuff.jl")
-include("solve_helpers.jl")
-include("main.jl")
-
 
 function comp_rational(x,y)
     try
@@ -30,7 +25,7 @@ function get_roots_deg1(expression, x)
     subs, filtered_expr = filter_poly(expression, x)
     coeffs, constant = polynomial_coeffs(filtered_expr , [x])
 
-    @assert isequal(Symbolics.degree(filtered_expr, x), 1) "Expected a polynomial of degree 1 in $x, got $expression"
+    @assert isequal(sdegree(coeffs, x), 1) "Expected a polynomial of degree 1 in $x, got $expression"
 
     m = get(coeffs, x, 0)
     c = get(coeffs, x^0, 0)
@@ -53,7 +48,7 @@ function get_roots_deg2(expression, x)
     subs, filtered_expr = filter_poly(expression, x)
     coeffs, constant = polynomial_coeffs(filtered_expr, [x])
 
-    @assert isequal(Symbolics.degree(filtered_expr, x), 2) "Expected a polynomial of degree 2 in $x, got $expression"
+    @assert isequal(sdegree(coeffs, x), 2) "Expected a polynomial of degree 2 in $x, got $expression"
 
     results = (substitute(get(coeffs, x^i, 0), subs, fold=false) for i in 2:-1:0)
     a, b, c = results
@@ -68,7 +63,7 @@ function get_roots_deg3(expression, x)
     subs, filtered_expr = filter_poly(expression, x)
     coeffs, constant = polynomial_coeffs(filtered_expr, [x])
 
-    @assert isequal(Symbolics.degree(filtered_expr, x), 3) "Expected a polynomial of degree 3 in $x, got $expression"
+    @assert isequal(sdegree(coeffs, x), 3) "Expected a polynomial of degree 3 in $x, got $expression"
 
     results = (substitute(get(coeffs, x^i, 0), subs, fold=false) for i in 3:-1:0)
     a, b, c, d = results
@@ -76,7 +71,7 @@ function get_roots_deg3(expression, x)
     
     Q = comp_rational((((3*a*c) - b^2)), (9a^2))
     R = comp_rational(((9*a*b*c - ((27*(a^2)*d)+2b^3))), (54a^3))
-
+    
     S = Symbolics.term(scbrt, (R + Symbolics.term(ssqrt, (Q^3+R^2))))
     T = Symbolics.term(scbrt, (R - Symbolics.term(ssqrt, (Q^3+R^2))))
 
@@ -93,7 +88,7 @@ function get_roots_deg4(expression, x)
     subs, filtered_expr = filter_poly(expression, x)
     coeffs, constant = polynomial_coeffs(filtered_expr, [x])
 
-    @assert isequal(Symbolics.degree(filtered_expr, x), 4) "Expected a polynomial of degree 4 in $x, got $expression"
+    @assert isequal(sdegree(coeffs, x), 4) "Expected a polynomial of degree 4 in $x, got $expression"
 
     results = (substitute(get(coeffs, x^i, 0), subs, fold=false) for i in 4:-1:0)
     a, b, c, d, e = results
@@ -112,19 +107,10 @@ function get_roots_deg4(expression, x)
 
     # Yassin: this thing is a problem for parametric
     for root in roots_m
-        try
-            if !isequal(eval(Symbolics.toexpr(root)), 0)
-                m = deepcopy(root)
-                break
-            end
-        catch e
-            @info typeof(e)
-            if typeof(e) == UndefVarError
-                @info root != 0
-                m = root
-            else
-                rethrow(e)
-            end
+        vars = Symbolics.get_variables(root)
+        if isequal(vars, []) && !isequal(eval(Symbolics.toexpr(root)), 0)
+            m = deepcopy(root)
+            break
         end
     end
 
