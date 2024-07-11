@@ -25,6 +25,7 @@ export n_occurrences
 export n_func_occ
 export split_by_variable
 export postprocess_root
+export attract
 
 
 end

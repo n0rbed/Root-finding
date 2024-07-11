@@ -15,6 +15,43 @@ function ssubs(expr, dict)
     end
 end
 
+function ssqrt(n)
+    n = Symbolics.unwrap(n)
+
+    if n isa Real
+        n > 0 && return sqrt(n)
+        return sqrt(complex(n))
+    end
+
+    if n isa Complex 
+        return sqrt(n)
+    end
+
+    if n isa SymbolicUtils.BasicSymbolic{Real}
+        return Symbolics.term(ssqrt, n)
+    end
+
+end
+
+
+function scbrt(n)
+    n = Symbolics.unwrap(n)
+
+    if n isa Real
+        return cbrt(n)
+    end
+
+    if n isa Complex
+        return (n)^(1/3)
+    end
+
+    if n isa SymbolicUtils.BasicSymbolic{Real}
+        return Symbolics.term(scbrt, n)
+    end
+
+end
+
+
 struct RootsOf
     poly::Num
     var::Num

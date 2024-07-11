@@ -146,7 +146,7 @@ function attract_exponential(lhs, var)
 end
 
 
-function attract_collect(lhs, var)
+function attract(lhs, var)
     unwrapped_lhs = Symbolics.unwrap(lhs)
 
     if detect_exponential(lhs, var)
@@ -170,7 +170,7 @@ function nl_solve(lhs, var)
     elseif nx == 1
         return isolate(lhs, var)
     elseif nx > 1
-        return isolate(attract_collect(lhs, var), var)
+        return isolate(attract(lhs, var), var)
     end
 
 end

@@ -37,18 +37,8 @@ end
 function get_deg2_with_coeffs(coeffs::Vector{Any})
     a, b, c = coeffs
 
-    root1 = comp_rational(-b + Symbolics.term(sqrt, comp_rational((b^2 - 4(a*c)), 1)), 2a)
-    root2 = comp_rational(-b - Symbolics.term(sqrt, comp_rational((b^2 - 4(a*c)), 1)), 2a)
-    try
-        if eval(Symbolics.toexpr(b^2 - 4(a*c))) < 0
-            root1 = simplify((-b + Symbolics.term(sqrt, Symbolics.term(complex, (b^2 - 4(a*c))))) // 2a)
-            root2 = simplify((-b - Symbolics.term(sqrt, Symbolics.term(complex, (b^2 - 4(a*c))))) // 2a)
-        end
-    catch e
-        if e isa TypeError
-            println("Answers assume that ", b^2 - 4(a*c), " > 0")
-        end
-    end
+    root1 = comp_rational(-b + Symbolics.term(ssqrt, comp_rational((b^2 - 4(a*c)), 1)), 2a)
+    root2 = comp_rational(-b - Symbolics.term(ssqrt, comp_rational((b^2 - 4(a*c)), 1)), 2a)
 
     return [root1, root2]
 end
@@ -63,18 +53,8 @@ function get_roots_deg2(expression, x)
     results = (substitute(get(coeffs, x^i, 0), subs, fold=false) for i in 2:-1:0)
     a, b, c = results
 
-    root1 = comp_rational(-b + Symbolics.term(sqrt, comp_rational((b^2 - 4(a*c)), 1)), 2a)
-    root2 = comp_rational(-b - Symbolics.term(sqrt, comp_rational((b^2 - 4(a*c)), 1)), 2a)
-    try
-        if eval(Symbolics.toexpr(b^2 - 4(a*c))) < 0
-            root1 = simplify((-b + Symbolics.term(sqrt, Symbolics.term(complex, (b^2 - 4(a*c))))) // 2a)
-            root2 = simplify((-b - Symbolics.term(sqrt, Symbolics.term(complex, (b^2 - 4(a*c))))) // 2a)
-        end
-    catch e
-        if e isa TypeError
-            println("Answers assume that ", b^2 - 4(a*c), " > 0")
-        end
-    end
+    root1 = comp_rational(-b + Symbolics.term(ssqrt, comp_rational((b^2 - 4(a*c)), 1)), 2a)
+    root2 = comp_rational(-b - Symbolics.term(ssqrt, comp_rational((b^2 - 4(a*c)), 1)), 2a)
 
     return [root1, root2]
 end
@@ -92,29 +72,12 @@ function get_roots_deg3(expression, x)
     Q = comp_rational((((3*a*c) - b^2)), (9a^2))
     R = comp_rational(((9*a*b*c - ((27*(a^2)*d)+2b^3))), (54a^3))
 
-
-    # cbrt(negative real numbers) evaluates normally with symbolics
-    # while (im)^(1//3) also evaluates normally,
-    # the other cases cbrt(im) and (-real)^(1/3) do not evaluate
-    S = Symbolics.term(cbrt, (R + Symbolics.term(sqrt, (Q^3+R^2))))
-    T = Symbolics.term(cbrt, (R - Symbolics.term(sqrt, (Q^3+R^2))))
-    try 
-        if isequal(eval(Symbolics.toexpr(S)), S)
-            throw(UndefVarError(:x))
-        end
-        eval(Symbolics.toexpr((Q^3+R^2))) < 0 
-    catch e
-        if typeof(e) == UndefVarError
-            println("Condition: ", Q^3+R^2, " > 0")
-        else
-            S = (Symbolics.term(complex, (R + im*Symbolics.term(sqrt, -(Q^3+R^2)))))^(1//3)
-            T = (Symbolics.term(complex, (R - im*Symbolics.term(sqrt, -(Q^3+R^2)))))^(1//3)
-        end
-    end
+    S = Symbolics.term(scbrt, (R + Symbolics.term(ssqrt, (Q^3+R^2))))
+    T = Symbolics.term(scbrt, (R - Symbolics.term(ssqrt, (Q^3+R^2))))
 
     root1 = S + T - (b//(3*a))
-    root2 = -((S+T)//2) - (b//(3*a)) + (im*(Symbolics.term(sqrt, 3))/2)*(S-T)
-    root3 = -((S+T)//2) - (b//(3*a)) - (im*(Symbolics.term(sqrt, 3))/2)*(S-T)
+    root2 = -((S+T)//2) - (b//(3*a)) + (im*(Symbolics.term(ssqrt, 3))/2)*(S-T)
+    root3 = -((S+T)//2) - (b//(3*a)) - (im*(Symbolics.term(ssqrt, 3))/2)*(S-T)
 
     return [root1, root2, root3]
 end
@@ -142,7 +105,7 @@ function get_roots_deg4(expression, x)
     roots_m = solve_univar(eq_m, m)
     m = 0
     for root in roots_m
-        if !isequal(root, 0)
+        if !isequal(eval(Symbolics.toexpr(root)), 0)
             m = root
             break
         end
@@ -159,20 +122,10 @@ end
 
 function get_yroots(m, p, q)
     a = 1
-    if m isa Real && (eval(Symbolics.toexpr(m))) < 0
-        b1 = im*Symbolics.term(sqrt,  -2m)
-        c1 = (p//2) + m - (q//(2*im*Symbolics.term(sqrt, -2m)))
-        b2 = -im*Symbolics.term(sqrt, -2m)
-        c2 = (p//2) + m + (q//(2*im*Symbolics.term(sqrt, -2m)))
-    else
-        if !isequal(Symbolics.get_variables(m), [])
-            println(m, " is assumed to be > 0")
-        end
-        b1 = Symbolics.term(sqrt,  2m)
-        c1 = (p//2) + m - (q//(2*Symbolics.term(sqrt, 2m)))
-        b2 = -Symbolics.term(sqrt, 2m)
-        c2 = (p//2) + m + (q//(2*Symbolics.term(sqrt, 2m)))
-    end
+    b1 = Symbolics.term(ssqrt,  2m)
+    c1 = (p//2) + m - (q//(2*Symbolics.term(ssqrt, 2m)))
+    b2 = -Symbolics.term(ssqrt, 2m)
+    c2 = (p//2) + m + (q//(2*Symbolics.term(ssqrt, 2m)))
 
     root1, root2 = get_deg2_with_coeffs([a, b1, c1])
     root3, root4 = get_deg2_with_coeffs([a, b2, c2])
