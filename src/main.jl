@@ -102,7 +102,7 @@ function solve_univar(expression, x, mult=false)
 
 
     if isequal(arr_roots, [])
-        return RootsOf(Symbolics.wrap(expression))
+        return RootsOf(Symbolics.wrap(expression), Symbolics.wrap(x))
     end
 
     return arr_roots

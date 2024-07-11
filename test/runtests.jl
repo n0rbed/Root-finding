@@ -1,6 +1,8 @@
 using RootFinding, Symbolics
 using Test
 
+# Alex: can separate tests into several `@testset`s.
+
 function sort_roots(roots)
     return sort(roots, lt = (x,y) -> real(x)==real(y) ? imag(x)<imag(y) : real(x)<real(y))
 end

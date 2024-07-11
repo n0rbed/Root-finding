@@ -23,6 +23,8 @@ SymbolicUtils.@syms __x
 @test _is_const_number(SymbolicUtils.term(sqrt, 2) + 21)
 @test _is_const_number((SymbolicUtils.term(exp, 2) * SymbolicUtils.term(exp, 2)) // 99)
 
+_postprocess_root(x) = x
+
 function _postprocess_root(x::Number)
     # N // 1 => N
     if x isa Rational

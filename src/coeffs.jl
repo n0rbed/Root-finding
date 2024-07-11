@@ -1,5 +1,8 @@
 using Symbolics 
 
+# TODO(Alex): it is not clear to me at the moment if we should use
+# Symbolics.term or TermInterface.maketerm
+
 function sub(subs, place_to_sub)
     sub_var = gensym()
     sub_var = (@variables $sub_var)[1]
@@ -58,6 +61,7 @@ function filter_poly(og_expr, var)
         subs1, subs2 = Dict(), Dict()
         expr1, expr2 = 0, 0
 
+        # Alex: should this be `0` ?
         if !isequal(expr.re, false)
             subs1, expr1 = filter_poly(expr.re, var)
         end
@@ -65,6 +69,7 @@ function filter_poly(og_expr, var)
             subs2, expr2 = filter_poly(expr.im, var)
         end
 
+        # Alex: shouldn't the variable name for im be fixed?
         subs = merge(subs1, subs2)
         i_var = gensym()
         i_var = (@variables $i_var)[1]
@@ -81,6 +86,7 @@ function filter_poly(og_expr, var)
         vars = Symbolics.get_variables(arg)
         type_arg = typeof(arg)
         if isequal(vars, [])
+            # Alex: what about Int8, UInt8, Int16, BigInt, etc ?
             if type_arg == Int64 || type_arg == Rational{Int64}
                 continue
             end
