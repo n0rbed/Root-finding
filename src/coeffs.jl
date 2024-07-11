@@ -32,10 +32,11 @@ end
 
 function filter_stuff(expr)
     type_expr = typeof(expr)
-    if isequal(type_expr, Int64) || isequal(type_expr, Rational{Int64})
+
+    if type_expr isa Integer || type_expr isa Rational
         return Dict(), expr
+
     else
-        # TODO:  
         expr = isequal(expr, true) ? 1 : expr
         subs = Dict{Any, Any}()
 
@@ -49,6 +50,7 @@ function filter_poly(og_expr, var)
     expr = deepcopy(og_expr)
     expr = Symbolics.unwrap(expr)
     vars = Symbolics.get_variables(expr)
+    friends = []
     if !isequal(vars, []) && isequal(vars[1], expr)
         return (Dict{Any, Any}(), expr)
     elseif isequal(vars, [])
@@ -61,15 +63,17 @@ function filter_poly(og_expr, var)
         subs1, subs2 = Dict(), Dict()
         expr1, expr2 = 0, 0
 
-        # Alex: should this be `0` ?
-        if !isequal(expr.re, false)
+        if !isequal(expr.re, 0)
             subs1, expr1 = filter_poly(expr.re, var)
         end
-        if !isequal(expr.im, false)
+        if !isequal(expr.im, 0)
             subs2, expr2 = filter_poly(expr.im, var)
         end
 
         # Alex: shouldn't the variable name for im be fixed?
+        # Yassin: what if this fixed variable is inputted by the user?
+        # i suggest we just treat im as if its any random unfriendly 
+        # input like sqrt(2)
         subs = merge(subs1, subs2)
         i_var = gensym()
         i_var = (@variables $i_var)[1]
@@ -87,7 +91,8 @@ function filter_poly(og_expr, var)
         type_arg = typeof(arg)
         if isequal(vars, [])
             # Alex: what about Int8, UInt8, Int16, BigInt, etc ?
-            if type_arg == Int64 || type_arg == Rational{Int64}
+            # Yassin: I think this change covers most of them?
+            if type_arg isa Integer || type_arg isa Rational
                 continue
             end
             args[i] = sub(subs, args[i])
