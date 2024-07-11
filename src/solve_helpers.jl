@@ -17,8 +17,9 @@ end
 
 struct RootsOf
     poly::Num
+    var::Num
 end
-Base.show(io::IO, r::RootsOf) = print(io, "roots_of(", r.poly, ")")
+Base.show(io::IO, r::RootsOf) = print(io, "roots_of(", r.poly, ", ", x, ")")
 
 
 # multivar stuff
