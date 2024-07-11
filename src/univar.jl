@@ -1,5 +1,10 @@
 using Symbolics
 import Symbolics: is_singleton, unwrap
+include("coeffs.jl")
+include("nemo_stuff.jl")
+include("solve_helpers.jl")
+include("main.jl")
+
 
 function comp_rational(x,y)
     try
@@ -104,10 +109,22 @@ function get_roots_deg4(expression, x)
 
     roots_m = solve_univar(eq_m, m)
     m = 0
+
+    # Yassin: this thing is a problem for parametric
     for root in roots_m
-        if !isequal(eval(Symbolics.toexpr(root)), 0)
-            m = root
-            break
+        try
+            if !isequal(eval(Symbolics.toexpr(root)), 0)
+                m = deepcopy(root)
+                break
+            end
+        catch e
+            @info typeof(e)
+            if typeof(e) == UndefVarError
+                @info root != 0
+                m = root
+            else
+                rethrow(e)
+            end
         end
     end
 
