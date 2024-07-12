@@ -44,7 +44,7 @@ function filter_stuff(expr)
     end
 end
 
-function filter_subexpr(expr, var)
+function _filter_poly(expr, var)
     expr = Symbolics.unwrap(expr)
     vars = Symbolics.get_variables(expr)
     if !isequal(vars, []) && isequal(vars[1], expr)
@@ -59,10 +59,10 @@ function filter_subexpr(expr, var)
         expr1, expr2 = 0, 0
 
         if !isequal(expr.re, 0)
-            subs1, expr1 = filter_subexpr(expr.re, var)
+            subs1, expr1 = _filter_poly(expr.re, var)
         end
         if !isequal(expr.im, 0)
-            subs2, expr2 = filter_subexpr(expr.im, var)
+            subs2, expr2 = _filter_poly(expr.im, var)
         end
 
         subs = merge(subs1, subs2)
@@ -103,8 +103,8 @@ function filter_subexpr(expr, var)
                 continue
             end
             # filter(args[1]), filter[args[2]] and then merge
-            subs1, monomial[1] = filter_subexpr(monomial[1], var)
-            subs2, monomial[2] = filter_subexpr(monomial[2], var)
+            subs1, monomial[1] = _filter_poly(monomial[1], var)
+            subs2, monomial[2] = _filter_poly(monomial[2], var)
 
             merge!(subs, merge(subs1, subs2))
             continue
@@ -119,7 +119,7 @@ function filter_subexpr(expr, var)
                     continue
                 end
                 # filter each arg and then merge
-                new_subs, monomial[j] = filter_subexpr(monomial[j], var)
+                new_subs, monomial[j] = _filter_poly(monomial[j], var)
                 merge!(subs_of_monom, new_subs)
             end
             merge!(subs, subs_of_monom)
@@ -127,7 +127,7 @@ function filter_subexpr(expr, var)
 
         if oper === (/) || oper === (+)
             for (j, x) in enumerate(monomial)
-                new_subs, new_filtered = filter_subexpr(monomial[j], var)
+                new_subs, new_filtered = _filter_poly(monomial[j], var)
                 merge!(subs, new_subs)
             end
         end
@@ -143,16 +143,18 @@ function filter_poly(og_expr, var)
     expr = deepcopy(og_expr)
     expr = Symbolics.unwrap(expr)
     vars = Symbolics.get_variables(expr)
+
+    # handle edge cases
     if !isequal(vars, []) && isequal(vars[1], expr)
         return (Dict{Any, Any}(), expr)
     elseif isequal(vars, [])
         return filter_stuff(expr)
     end
 
-    subs, expr = filter_subexpr(expr, var)
+    # core filter
+    subs, expr = _filter_poly(expr, var)
 
-    # reassemble expr to avoid variables remembering original values issue
-    # CANT DO THIS FOR EVERY RECURSION ALONE, HAVE TO BE AT FINAL STAGE OF FILTER_POLY ONLY
+    # reassemble expr to avoid variables remembering original values issue and clean
     args = arguments(expr)
     oper = operation(expr)
     new_expr = clean_f(Symbolics.term(oper, args...), var, subs)
