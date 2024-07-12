@@ -5,8 +5,9 @@ include("nemo_stuff.jl")
 include("solve_helpers.jl")
 include("postprocess.jl")
 include("univar.jl")
-include("detect_attract.jl")
-include("isc.jl")
+include("isoa_helpers.jl")
+include("attract.jl")
+include("isoa_main.jl")
 include("main.jl")
 
 export solve
@@ -26,6 +27,7 @@ export n_func_occ
 export split_by_variable
 export postprocess_root
 export attract
+export isolate
 
 
 end
