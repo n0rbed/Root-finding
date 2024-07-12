@@ -1,15 +1,16 @@
 using Symbolics
 
 function isolate(lhs, var)
-    rhs = [0]
+    rhs = Vector{Any}([0])
     lhs = Symbolics.unwrap(lhs)
     while !isequal(lhs, var)
-        try
-            subs, poly = filter_poly(lhs-rhs, var)
-            if check_polynomial(Symbolics.wrap(poly)) && n_occurrences(poly, var) > 1
-                return solve(Symbolics.wrap(lhs-rhs), var)
+        subs, poly = filter_poly(lhs, var)
+        if check_poly_inunivar(poly, var)
+            roots = []
+            for i = 1:length(rhs)
+                append!(roots, solve(Symbolics.wrap(lhs-rhs[i]), var))
             end
-        catch e
+            return roots
         end
 
         oper = Symbolics.operation(lhs)
@@ -117,7 +118,9 @@ end
 
 
 function attract(lhs, var)
-    unwrapped_lhs = Symbolics.unwrap(lhs)
+    if n_func_occ(simplify(lhs), var) < n_func_occ(lhs, var)
+        lhs = simplify(lhs)
+    end
 
     if detect_exponential(lhs, var)
         lhs = attract_exponential(lhs, var)
@@ -145,8 +148,9 @@ function nl_solve(lhs, var)
 
 end
 
-@variables x y 
-nl_solve(log(x) - 1, x)
+# @variables x y 
+# nl_solve(exp(2x)*exp(x^2 + 3) + 3, x)
+# nl_solve(2sin(x+1)cos(x+1) + 1, x)
 # nl_solve(x/5 + 3x^2, x)
 # nl_solve(x + 2, x)
 # nl_solve(expr, x)

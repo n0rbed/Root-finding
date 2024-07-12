@@ -1,6 +1,61 @@
+using Symbolics, Test
+function detect_doubleangle1(arg, var)
+    # detect 2sin(x)cos(x) = sin(2x)
+    !Symbolics.iscall(arg) && return false
+    oper_arg = Symbolics.operation(arg)
+
+    found = [false, false, false]
+
+    c = 1
+    sub_args = Symbolics.arguments(arg)
+    oper_arg != (*) && return false
+    length(sub_args) != 3 && return false
+
+    sin_content = NaN
+    cos_content = NaN
+    if any(isequal(2, n) for n in sub_args)
+        found[c] = true
+        c += 1
+    end
+    for n in sub_args
+        !Symbolics.iscall(n) && continue
+        cur_content = Symbolics.arguments(n)[1]
+        if (isequal(Symbolics.operation(n), sin) || isequal(Symbolics.operation(n), cos)) && n_occurrences(n, var) > 0
+            Symbolics.operation(n) == sin ? sin_content = cur_content : cos_content = cur_content
+            found[c] = true
+            c += 1
+        end
+    end
+
+    !isequal(sin_content, cos_content) && return false
+    return all(found)
+end
+
+function detect_trig(lhs, var)
+    u_lhs = Symbolics.unwrap(lhs)
+    args = Symbolics.arguments(u_lhs)
+    oper = Symbolics.operation(u_lhs)
+
+    # should traverse entire expresssion in the future, so
+    # u_lhs as a whole, then u_lhs arg by arg recursively,
+    # say we have 2sin(x)cos(x) / y
+    # or do we do this traversing outside? in the mother func attract?
+    b = false
+    if oper === (+)
+        for arg in args
+            b |= detect_doubleangle1(arg, var)
+        end
+    elseif oper === (*)
+        b |= detect_doubleangle1(u_lhs, var)
+    end
+    return b
+end
+
+
 function detect_addlogs(lhs, var)
-    args = Symbolics.arguments(Symbolics.unwrap(lhs))
-    oper = Symbolics.operation(Symbolics.unwrap(lhs))
+    u_lhs = Symbolics.unwrap(lhs)
+    args = Symbolics.arguments(u_lhs)
+    oper = Symbolics.operation(u_lhs)
     !isequal(oper, (+)) && return false
     
     found = [false, false]
@@ -81,4 +136,13 @@ function attract_exponential(lhs, var)
     return expand(lhs)
 end
 
+function attract_doubleangle1(lhs, var)
+    contains_var(arg) = occursin(string(var), string(arg))
+    r_doubleangle1 = @acrule 2*sin(~x::(contains_var))*cos(~x::(contains_var)) => sin(2*~x)
+    lhs = SymbolicUtils.Fixpoint(r)(Symbolics.unwrap(lhs))
+    return lhs
+end
 
+@variables x
+lhs = 2sin(x+1)cos(x+1)
+@test detect_trig(lhs, x)
