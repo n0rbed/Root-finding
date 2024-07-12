@@ -113,6 +113,10 @@ function get_roots_deg4(expression, x)
             break
         end
     end
+    if isequal(m, 0)
+        @info roots_m[1] != 0
+        m = roots_m[1]
+    end
 
     arr = get_yroots(m, p, q)
     for (i, root) in enumerate(arr)

@@ -14,7 +14,7 @@ function sub(subs, place_to_sub)
 end
 
 function clean_f(filtered_expr, var, subs)
-    filtered_expr = (simplify(real(filtered_expr)))
+    filtered_expr = simplify_fractions(simplify(real(filtered_expr)))
     unwrapped_f = Symbolics.unwrap(filtered_expr)
     !iscall(unwrapped_f) && return filtered_expr
     oper = operation(unwrapped_f)
@@ -65,10 +65,6 @@ function filter_subexpr(expr, var)
             subs2, expr2 = filter_subexpr(expr.im, var)
         end
 
-        # Alex: shouldn't the variable name for im be fixed?
-        # Yassin: what if this fixed variable is inputted by the user?
-        # i suggest we just treat im as if its any random unfriendly 
-        # input like sqrt(2)
         subs = merge(subs1, subs2)
         i_var = gensym()
         i_var = (@variables $i_var)[1]
@@ -159,9 +155,9 @@ function filter_poly(og_expr, var)
     # CANT DO THIS FOR EVERY RECURSION ALONE, HAVE TO BE AT FINAL STAGE OF FILTER_POLY ONLY
     args = arguments(expr)
     oper = operation(expr)
-    #new_expr = clean_f(Symbolics.term(oper, args...), var, subs)
+    new_expr = clean_f(Symbolics.term(oper, args...), var, subs)
 
-    return subs, expr
+    return subs, new_expr
 end
 
 

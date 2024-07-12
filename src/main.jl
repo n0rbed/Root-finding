@@ -71,7 +71,6 @@ function solve_univar(expression, x, mult=false)
     factors = convert(Vector{Any}, factors)
 
     factors_subbed = map(factor -> ssubs(factor, subs), factors)
-
     arr_roots = []
 
     if degree < 5 && length(factors) == 1
@@ -232,16 +231,3 @@ function solve_multivar(eqs::Vector{Num}, vars::Vector{Num}, mult=false)
 
     return solutions
 end
-
-@variables x a b c d e m
-# expr = a*x^4 + b*x^3 + c*x^2 + d*x + e
-solve(x, x)
-# eq_m = ((8a*c - 3(b^2))*(m^2)) / (a^2) - (((8(a^2)*d - 4a*b*c + b^3) / (8(a^3)))^2) + 8(m^3) + m*((-256(a^3)*e + 64(a^2)*b*d - 16a*(b^2)*c + 3(b^4)) / (32(a^4)) + 2(((8a*c - 3(b^2)) / (8(a^2)))^2))
-# get_roots_deg3(eq_m, m)
-# get_roots_deg4(x^4 + 1, x)
-# get_roots_deg4(expr, x)
-# get_roots_deg4(x^4 - 3x^2 +2, x)
-# solve(x^10 - a^10, x)
-#  eqs = [x^2, y, z]
-#  solve(eqs, [x,y,z])
-
