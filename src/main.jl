@@ -231,3 +231,6 @@ function solve_multivar(eqs::Vector{Num}, vars::Vector{Num}, mult=false)
 
     return solutions
 end
+
+@variables x
+solve(x^2 + 1, x)

@@ -105,6 +105,9 @@ function isolate(lhs, var)
         elseif oper === (atan)
             lhs = args[1]
             rhs = map(sol -> Symbolics.term(tan, sol), rhs)
+        elseif oper === (exp)
+           lhs = args[1] 
+           rhs = map(sol -> Symbolics.term(log, sol), rhs)
         end
 
         lhs = simplify(lhs)
@@ -179,7 +182,7 @@ function n_func_occ(expr, var)
     expr = Symbolics.unwrap(expr)
     !iscall(expr) && return n_occurrences(expr, var)
     args, cur_oper = Symbolics.arguments(expr), Symbolics.operation(expr)
-    counted_ops = [sin, log, log2, log10, cos, tan, asin, acos, atan]
+    counted_ops = [sin, log, log2, log10, cos, tan, asin, acos, atan, exp]
     n = 0
 
 
@@ -236,7 +239,6 @@ function n_func_occ(expr, var)
                         n += n_func_occ(sub_arg, var)
                     end
                 end
-
             end
         end
 
@@ -285,9 +287,8 @@ end
 
 
 @variables x y 
+nl_solve(log(x) - 1, x)
 # nl_solve(x/5 + 3x^2, x)
-
-
 # nl_solve(x + 2, x)
 # nl_solve(expr, x)
 # nl_solve(2^(x+1) + 5^(x+3), x)

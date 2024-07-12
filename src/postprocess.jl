@@ -14,7 +14,7 @@ using Test
 _is_const_number(x::Number) = true
 function _is_const_number(x::SymbolicUtils.BasicSymbolic)
     !Symbolics.iscall(x) && return false
-    all(_is_const_number, arguments(x))
+    all(_is_const_number, Symbolics.arguments(x))
 end
 
 SymbolicUtils.@syms __x
@@ -56,7 +56,7 @@ function _postprocess_root(x::SymbolicUtils.BasicSymbolic)
 
     # sqrt(0), cbrt(0) => 0
     # sqrt(1), cbrt(1) => 1
-    if Symbolics.iscall(x) && (operation(x) === sqrt || operation(x) === cbrt)
+    if Symbolics.iscall(x) && (operation(x) === sqrt || operation(x) === cbrt || operation(x) === ssqrt || operation(x) === scbrt)
         arg = arguments(x)[1]
         if isequal(arg, 0) || isequal(arg, 1)
             return arg
@@ -64,17 +64,20 @@ function _postprocess_root(x::SymbolicUtils.BasicSymbolic)
     end
 
     # sqrt(N^2) => N
-    if Symbolics.iscall(x) && operation(x) === sqrt
+    if Symbolics.iscall(x) && (operation(x) === sqrt || operation(x) === ssqrt) 
         arg = arguments(x)[1]
-        if arg isa Integer && arg == (isqrt(arg))^2
+        if arg isa Integer && arg > 0 && arg == (isqrt(arg))^2
             return isqrt(arg)
+        elseif arg isa Integer && arg < 0 && -arg == (isqrt(-arg))^2
+            return im*isqrt(-arg)
         end
     end
 
+    
     # (sqrt(N))^2 => N
     if Symbolics.iscall(x) && operation(x) === (^) && isequal(arguments(x)[2], 2)
         arg1 = arguments(x)[1]
-        if Symbolics.iscall(arg1) && operation(arg1) === sqrt
+        if Symbolics.iscall(arg1) && (operation(arg1) === sqrt || operation(arg1) === ssqrt)
             if _is_const_number(arguments(arg1)[1])
                 return arguments(arg1)[1]
             end
@@ -89,9 +92,10 @@ function postprocess_root(x)
 end
 
 
+
 # some tests
 SymbolicUtils.@syms __x
-__symsqrt(x) = SymbolicUtils.term(sqrt, x)
+__symsqrt(x) = SymbolicUtils.term(ssqrt, x)
 @test postprocess_root(2 // 1) == 2 && postprocess_root(2 + 0*im) == 2
 @test postprocess_root(__symsqrt(__symsqrt(0)) - 11) == -11
 @test postprocess_root(3*__symsqrt(2)^2) == 6
