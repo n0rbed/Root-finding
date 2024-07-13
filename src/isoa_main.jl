@@ -128,6 +128,7 @@ function attract(lhs, var)
     if detect_addlogs(lhs, var)
         lhs = attract_logs(lhs, var)
     end
+    lhs = attract_trig(lhs, var)
 
     n_func_occ(lhs, var) == 1 && return lhs
 
@@ -148,7 +149,8 @@ function nl_solve(lhs, var)
 
 end
 
-# @variables x y 
+@variables x y 
+# nl_solve(3*2^(x + 3) + 2*5^(x + 1), x)
 # nl_solve(exp(2x)*exp(x^2 + 3) + 3, x)
 # nl_solve(2sin(x+1)cos(x+1) + 1, x)
 # nl_solve(x/5 + 3x^2, x)

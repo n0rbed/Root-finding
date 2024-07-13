@@ -51,11 +51,28 @@ function scbrt(n)
 
 end
 
+function slog(n)
+    n = Symbolics.unwrap(n)
+
+    if n isa Real
+        return n > 0 ? log(n) : log(complex(n))
+    end
+
+    if n isa Complex
+        return log(n)
+    end
+
+    if n isa SymbolicUtils.BasicSymbolic{Real}
+        return Symbolics.term(slog, n)
+    end
+end
+
 
 struct RootsOf
     poly::Num
     var::Num
 end
+
 Base.show(io::IO, r::RootsOf) = print(io, "roots_of(", r.poly, ", ", x, ")")
 
 

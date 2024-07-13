@@ -270,6 +270,14 @@ end
     lhs = sort_roots(eval.(Symbolics.toexpr.(nl_solve(expr, x))))
     rhs = sort_roots([1, -1])
     @test isequal(lhs, rhs)
+
+    # this test is runs fine in the terminal,
+    # not sure why it breaks when doing test RootFinding though
+    expr = 3*2^(x+3) + 2*5^(x+1)
+    lhs = eval.(Symbolics.toexpr.(nl_solve(expr, x)))
+    # manually changed -im to im
+    rhs = [(im*Base.MathConstants.pi + log(5) - log(12))/(log(2) - log(5))]
+    @test lhs[1] ≈ rhs[1]
 end
 
 
