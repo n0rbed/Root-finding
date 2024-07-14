@@ -1,4 +1,12 @@
 using Symbolics
+# include("coeffs.jl")
+# include("univar.jl")
+# include("nemo_stuff.jl")
+# include("isoa_helpers.jl")
+# include("attract.jl")
+# include("solve_helpers.jl")
+# include("postprocess.jl")
+# include("main.jl")
 
 function isolate(lhs, var)
     rhs = Vector{Any}([0])
@@ -83,17 +91,13 @@ function isolate(lhs, var)
             lhs = args[1]
             rhs = map(sol -> Symbolics.term(^, sol, 3), rhs)
 
-        elseif oper === (sin)
+        elseif oper === (sin) || oper === (cos) || oper === (tan)
+            rev_oper = Dict(sin=>asin, cos=>acos, tan=>atan)
             lhs = args[1]
-            rhs = map(sol -> Symbolics.term(asin, sol), rhs)
-
-        elseif oper === (cos)
-            lhs = args[1]
-            rhs = map(sol -> Symbolics.term(acos, sol), rhs)
-
-        elseif oper === (tan)
-            lhs = args[1]
-            rhs = map(sol -> Symbolics.term(atan, sol), rhs)
+            new_var = gensym()
+            new_var = (@variables $(new_var))[1]
+            rhs = map(sol -> Symbolics.term(rev_oper[oper], sol) + Symbolics.term(*, Base.MathConstants.pi, 2*new_var), rhs)
+            @info string(new_var) * " ϵ" * " Ζ: e.g. 0, 1, 2..."
 
         elseif oper === (asin)
             lhs = args[1]
@@ -150,6 +154,8 @@ function nl_solve(lhs, var)
 end
 
 @variables x y 
+lhs = 2sin(x+1)cos(x+1) + 1
+# nl_solve(lhs, x)
 # nl_solve(3*2^(x + 3) + 2*5^(x + 1), x)
 # nl_solve(exp(2x)*exp(x^2 + 3) + 3, x)
 # nl_solve(2sin(x+1)cos(x+1) + 1, x)
@@ -158,3 +164,6 @@ end
 # nl_solve(expr, x)
 # nl_solve(2^(x+1) + 5^(x+3), x)
  
+
+expr = x^4 + sqrt(complex(-2//1))
+solve(expr, x)

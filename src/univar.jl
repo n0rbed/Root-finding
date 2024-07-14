@@ -30,7 +30,7 @@ function get_roots_deg1(expression, x)
     m = get(coeffs, x, 0)
     c = get(coeffs, x^0, 0)
     root = -comp_rational(c,m)
-    root = substitute(root, subs, fold=false)
+    root = Symbolics.unwrap(ssubs(root, subs))
     return [root]
 end
 
@@ -50,7 +50,7 @@ function get_roots_deg2(expression, x)
 
     @assert isequal(sdegree(coeffs, x), 2) "Expected a polynomial of degree 2 in $x, got $expression"
 
-    results = (substitute(get(coeffs, x^i, 0), subs, fold=false) for i in 2:-1:0)
+    results = (Symbolics.unwrap(ssubs(get(coeffs, x^i, 0), subs)) for i in 2:-1:0)
     a, b, c = results
 
     root1 = comp_rational(-b + Symbolics.term(ssqrt, comp_rational((b^2 - 4(a*c)), 1)), 2a)
@@ -65,7 +65,7 @@ function get_roots_deg3(expression, x)
 
     @assert isequal(sdegree(coeffs, x), 3) "Expected a polynomial of degree 3 in $x, got $expression"
 
-    results = (substitute(get(coeffs, x^i, 0), subs, fold=false) for i in 3:-1:0)
+    results = (Symbolics.unwrap(ssubs(get(coeffs, x^i, 0), subs)) for i in 3:-1:0)
     a, b, c, d = results
 
     
@@ -90,7 +90,7 @@ function get_roots_deg4(expression, x)
 
     @assert isequal(sdegree(coeffs, x), 4) "Expected a polynomial of degree 4 in $x, got $expression"
 
-    results = (substitute(get(coeffs, x^i, 0), subs, fold=false) for i in 4:-1:0)
+    results = (Symbolics.unwrap(ssubs(get(coeffs, x^i, 0), subs)) for i in 4:-1:0)
     a, b, c, d, e = results
 
     p = comp_rational((8(a*c)-3(b^2)), (8(a^2)))

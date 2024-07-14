@@ -66,83 +66,83 @@ end
 end
 
 @testset "Deg 2 univar" begin
-    exp = x^2 + 1
-    arr_get_roots = sort_roots(eval.(Symbolics.toexpr.(get_roots_deg2(exp, x))))
-    arr_solve_roots = sort_roots(eval.(Symbolics.toexpr.(solve(exp, x))))
+    expr = x^2 + 1
+    arr_get_roots = sort_roots(eval.(Symbolics.toexpr.(get_roots_deg2(expr, x))))
+    arr_solve_roots = sort_roots(eval.(Symbolics.toexpr.(solve(expr, x))))
     arr_known_roots = sort_roots([-im, im])
     @test all(arr_get_roots .≈ arr_known_roots)
     @test all(arr_solve_roots .≈ arr_known_roots)
 
-    exp = x^2 + 2x + 10
-    arr_get_roots = sort_roots(eval.(Symbolics.toexpr.(get_roots_deg2(exp, x))))
-    arr_solve_roots = sort_roots(eval.(Symbolics.toexpr.(solve(exp, x))))
+    expr = x^2 + 2x + 10
+    arr_get_roots = sort_roots(eval.(Symbolics.toexpr.(get_roots_deg2(expr, x))))
+    arr_solve_roots = sort_roots(eval.(Symbolics.toexpr.(solve(expr, x))))
     arr_known_roots = sort_roots([-1 + 3im, -1 - 3im])
     @test all(arr_get_roots .≈ arr_known_roots)
     @test all(arr_solve_roots .≈ arr_known_roots)
 
-    exp = x^2 - 10x + 25
-    arr_get_roots = sort_roots(eval.(Symbolics.toexpr.(get_roots_deg2(exp, x))))
-    arr_solve_roots = sort_roots(eval.(Symbolics.toexpr.(solve(exp, x))))
+    expr = x^2 - 10x + 25
+    arr_get_roots = sort_roots(eval.(Symbolics.toexpr.(get_roots_deg2(expr, x))))
+    arr_solve_roots = sort_roots(eval.(Symbolics.toexpr.(solve(expr, x))))
     arr_known_roots = [5,5]
     @test all(arr_get_roots .≈ arr_known_roots)
     @test all(arr_solve_roots .≈ arr_known_roots)
 end
 
 @testset "Deg 3 univar" begin
-    exp = x^3 - 2x^2 + x - 2 
-    arr_get_roots = sort_roots(eval.(Symbolics.toexpr.(get_roots_deg3(exp, x))))
-    arr_solve_roots = sort_roots(eval.(Symbolics.toexpr.(solve(exp, x))))
+    expr = x^3 - 2x^2 + x - 2 
+    arr_get_roots = sort_roots(eval.(Symbolics.toexpr.(get_roots_deg3(expr, x))))
+    arr_solve_roots = sort_roots(eval.(Symbolics.toexpr.(solve(expr, x))))
     arr_known_roots = sort_roots([2, -im, im])
     @test all(arr_get_roots .≈ arr_known_roots)
     @test all(arr_solve_roots .≈ arr_known_roots)
 
-    exp = x^3 + x^2 + x + 1
-    arr_get_roots = sort_roots(eval.(Symbolics.toexpr.(get_roots_deg3(exp, x))))
-    arr_solve_roots = sort_roots(eval.(Symbolics.toexpr.(solve(exp, x))))
+    expr = x^3 + x^2 + x + 1
+    arr_get_roots = sort_roots(eval.(Symbolics.toexpr.(get_roots_deg3(expr, x))))
+    arr_solve_roots = sort_roots(eval.(Symbolics.toexpr.(solve(expr, x))))
     arr_known_roots = sort_roots([-1, -im, im])
     @test all(arr_get_roots .≈ arr_known_roots)
     @test all(arr_solve_roots .≈ arr_known_roots)
 
-    exp = x^3 + 10x
-    arr_get_roots = sort_roots(eval.(Symbolics.toexpr.(get_roots_deg3(exp, x))))
-    arr_solve_roots = sort_roots(eval.(Symbolics.toexpr.(solve(exp, x))))
+    expr = x^3 + 10x
+    arr_get_roots = sort_roots(eval.(Symbolics.toexpr.(get_roots_deg3(expr, x))))
+    arr_solve_roots = sort_roots(eval.(Symbolics.toexpr.(solve(expr, x))))
     arr_known_roots = sort_roots([0, -sqrt(10)*im, sqrt(10)*im])
     @test all(arr_get_roots .≈ arr_known_roots)
     @test all(arr_solve_roots .≈ arr_known_roots)
 end
 
 @testset "Deg 4 univar" begin
-    exp = x^4 + 1
-    arr_get_roots = sort_roots(eval.(Symbolics.toexpr.(get_roots_deg4(exp, x))))
-    arr_solve_roots = sort_roots(eval.(Symbolics.toexpr.(solve(exp, x))))
+    expr = x^4 + 1
+    arr_get_roots = sort_roots(eval.(Symbolics.toexpr.(get_roots_deg4(expr, x))))
+    arr_solve_roots = sort_roots(eval.(Symbolics.toexpr.(solve(expr, x))))
     arr_known_roots = sort_roots(eval.([-(complex(-1))^(1/4),(complex(-1))^(1/4), (complex(-1))^(3/4), -(complex(-1))^(3/4)]))
     @test all(arr_get_roots .≈ arr_known_roots)
     @test all(arr_solve_roots .≈ arr_known_roots)
 
-    exp = x^4 - 3x^2 + 2
-    arr_get_roots = sort_roots(eval.(Symbolics.toexpr.(get_roots_deg4(exp, x))))
-    arr_solve_roots = sort_roots(eval.(Symbolics.toexpr.(solve(exp, x))))
+    expr = x^4 - 3x^2 + 2
+    arr_get_roots = sort_roots(eval.(Symbolics.toexpr.(get_roots_deg4(expr, x))))
+    arr_solve_roots = sort_roots(eval.(Symbolics.toexpr.(solve(expr, x))))
     arr_known_roots = sort_roots(eval.([-1, 1, sqrt(2), -sqrt(2)]))
     @test all(arr_get_roots .≈ arr_known_roots)
     @test all(arr_solve_roots .≈ arr_known_roots)
 
-    exp = x^4 - x^3 - 2x^2 + 6x - 4
-    arr_get_roots = sort_roots(eval.(Symbolics.toexpr.(get_roots_deg4(exp, x))))
-    arr_solve_roots = sort_roots(eval.(Symbolics.toexpr.(solve(exp, x))))
+    expr = x^4 - x^3 - 2x^2 + 6x - 4
+    arr_get_roots = sort_roots(eval.(Symbolics.toexpr.(get_roots_deg4(expr, x))))
+    arr_solve_roots = sort_roots(eval.(Symbolics.toexpr.(solve(expr, x))))
     arr_known_roots = sort_roots(eval.([-2, 1, 1-im, 1+im]))
     @test all(arr_get_roots .≈ arr_known_roots)
     @test all(arr_solve_roots .≈ arr_known_roots)
 end
 
 @testset "Complex coeffs univar" begin
-    exp = x^4 + sqrt(complex(-2//1))
-    arr_get_roots = sort_roots(eval.(Symbolics.toexpr.(solve(exp, x))))
+    expr = x^4 + sqrt(complex(-2//1))
+    arr_get_roots = sort_roots(eval.(Symbolics.toexpr.(solve(expr, x))))
     arr_known_roots = sort_roots(eval.([-Complex(-1)^(3/8)*2^(1/8), Complex(-1)^(3/8)*2^(1/8), 
         Complex(-1)^(7/8)*2^(1/8), -Complex(-1)^(7/8)*2^(1/8)]))
     @test all(arr_get_roots .≈ arr_known_roots)
 
     # standby
-    # exp = x^3 + sqrt(complex(-2//1))*x + 2
+    # expr = x^3 + sqrt(complex(-2//1))*x + 2
 end
 
 
@@ -271,12 +271,9 @@ end
     rhs = sort_roots([1, -1])
     @test isequal(lhs, rhs)
 
-    # this test is runs fine in the terminal,
-    # not sure why it breaks when doing test RootFinding though
     expr = 3*2^(x+3) + 2*5^(x+1)
     lhs = eval.(Symbolics.toexpr.(nl_solve(expr, x)))
-    # manually changed -im to im
-    rhs = [(im*Base.MathConstants.pi + log(5) - log(12))/(log(2) - log(5))]
+    rhs = [(-im*Base.MathConstants.pi + log(5) - log(12))/(log(2) - log(5))]
     @test lhs[1] ≈ rhs[1]
 end
 

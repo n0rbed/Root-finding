@@ -80,6 +80,7 @@ function _filter_poly(expr, var)
     subs = Dict{Any, Any}()
     for (i, arg) in enumerate(args)
         # handle constants
+        arg = Symbolics.unwrap(arg)
         vars = Symbolics.get_variables(arg)
         if isequal(vars, [])
             if arg isa Integer || arg isa Rational
@@ -99,8 +100,7 @@ function _filter_poly(expr, var)
         oper = Symbolics.operation(arg)
         monomial = arguments(arg)
         if oper === (^)
-            if any(arg -> isequal(arg, var), monomial) 
-                continue
+            if any(arg -> isequal(arg, var), monomial) continue
             end
             # filter(args[1]), filter[args[2]] and then merge
             subs1, monomial[1] = _filter_poly(monomial[1], var)
@@ -115,7 +115,7 @@ function _filter_poly(expr, var)
             for (j, x) in enumerate(monomial)
                 type_x = typeof(x)
                 vars = Symbolics.get_variables(x)
-                if (!isequal(vars, []) && isequal(vars[1], var))  || isequal(type_x, Int64) || isequal(type_x, Rational{Int64})
+                if (!isequal(vars, []) && isequal(vars[1], x))  || isequal(type_x, Int64) || isequal(type_x, Rational{Int64})
                     continue
                 end
                 # filter each arg and then merge
