@@ -265,16 +265,38 @@ end
     lhs = nl_solve(a*x^b + c, x)[1]
     rhs = Symbolics.term(^, -c.val/a.val, 1/b.val) 
     #@test isequal(lhs, rhs)
+    
+    expr = x + 2
+    lhs = eval.(Symbolics.toexpr.(nl_solve(expr, x)))
+    rhs = [-2]
+    @test lhs[1] ≈ rhs[1]
 
     expr = sqrt(log(cbrt(x^2)))
     lhs = sort_roots(eval.(Symbolics.toexpr.(nl_solve(expr, x))))
     rhs = sort_roots([1, -1])
     @test isequal(lhs, rhs)
 
+
+    expr = 2^(x+1) + 5^(x+3)
+    lhs = eval.(Symbolics.toexpr.(nl_solve(expr, x)))
+    rhs = [(-im*Base.MathConstants.pi - log(2) + 3log(5))/(log(2) - log(5))]
+    @test lhs[1] ≈ rhs[1]
+
     expr = 3*2^(x+3) + 2*5^(x+1)
     lhs = eval.(Symbolics.toexpr.(nl_solve(expr, x)))
     rhs = [(-im*Base.MathConstants.pi + log(5) - log(12))/(log(2) - log(5))]
     @test lhs[1] ≈ rhs[1]
+
+    expr = exp(2x)*exp(x^2 + 3) + 3
+    lhs = sort_roots(eval.(Symbolics.toexpr.(nl_solve(expr, x))))
+    rhs = sort_roots([-1 + sqrt(-2 + im*Base.MathConstants.pi + log(3)),
+        -1 - sqrt(-2 + im*Base.MathConstants.pi + log(3))])
+    @test all(lhs .≈ rhs)
+
+    expr = x/5 + 3x^2
+    lhs = sort_roots(eval.(Symbolics.toexpr.(nl_solve(expr, x))))
+    rhs = sort_roots([0, -1//15])
+    @test all(lhs .≈ rhs)
 end
 
 

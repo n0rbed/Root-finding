@@ -113,7 +113,7 @@ function attract_logs(lhs, var)
     push!(r_addslogs, @acrule ~z*slog(~x::(contains_var)) + ~h*slog(~y::(contains_var)) => slog((~x)^(~z) * (~y)^(~h)))
 
 
-    lhs = expand(simplify(lhs, SymbolicUtils.Postwalk(SymbolicUtils.Chain(r_addlogs))))
+    lhs = expand(simplify(lhs, rewriter=SymbolicUtils.Postwalk(SymbolicUtils.Chain(r_addlogs))))
 
     return lhs
 end
@@ -129,7 +129,7 @@ function attract_exponential(lhs, var)
     push!(r_addexpon, @acrule (~a)*(~b)^(~f::(contains_var)) + (~d)^(~g::(contains_var)) => ~f*Symbolics.term(slog, ~b) - ~g*Symbolics.term(slog, ~d) + Symbolics.term(slog, -~a))
     push!(r_addexpon, @acrule (~a)*(~b)^(~f::(contains_var)) + (~c)*(~d)^(~g::(contains_var)) => ~f*Symbolics.term(slog, ~b) - ~g*Symbolics.term(slog, ~d) + Symbolics.term(slog, -(~a)//(~c)))
 
-    lhs = expand(simplify(lhs, SymbolicUtils.Postwalk(SymbolicUtils.Chain(r_addexpon))))
+    lhs = expand(simplify(lhs, rewriter=SymbolicUtils.Postwalk(SymbolicUtils.Chain(r_addexpon))))
 
     return expand(lhs)
 end
@@ -165,7 +165,7 @@ function attract_trig(lhs, var)
         @acrule(cosh(~x::(contains_var)) * sinh(~x::(contains_var)) => sinh(2 * ~x)/2)
     ]
 
-    lhs = expand(simplify(lhs, SymbolicUtils.Postwalk(SymbolicUtils.Chain(r_trig))))
+    lhs = expand(simplify(lhs, rewriter=SymbolicUtils.Postwalk(SymbolicUtils.Chain(r_trig))))
 
     return lhs
 end

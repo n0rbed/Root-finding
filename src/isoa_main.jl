@@ -68,7 +68,7 @@ function isolate(lhs, var)
                 end
             else
                 lhs = args[2]
-                rhs = map(sol -> log(sol)//log(args[1]), rhs)
+                rhs = map(sol -> slog(sol)//slog(args[1]), rhs)
             end
 
         elseif oper === (log)
@@ -112,7 +112,7 @@ function isolate(lhs, var)
             rhs = map(sol -> Symbolics.term(tan, sol), rhs)
         elseif oper === (exp)
            lhs = args[1] 
-           rhs = map(sol -> Symbolics.term(log, sol), rhs)
+           rhs = map(sol -> Symbolics.term(slog, sol), rhs)
         end
 
         lhs = simplify(lhs)
@@ -156,14 +156,4 @@ end
 @variables x y 
 lhs = 2sin(x+1)cos(x+1) + 1
 # nl_solve(lhs, x)
-# nl_solve(3*2^(x + 3) + 2*5^(x + 1), x)
-# nl_solve(exp(2x)*exp(x^2 + 3) + 3, x)
-# nl_solve(2sin(x+1)cos(x+1) + 1, x)
-# nl_solve(x/5 + 3x^2, x)
-# nl_solve(x + 2, x)
-# nl_solve(expr, x)
-# nl_solve(2^(x+1) + 5^(x+3), x)
  
-
-expr = x^4 + sqrt(complex(-2//1))
-solve(expr, x)
