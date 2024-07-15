@@ -123,6 +123,7 @@ function _filter_poly(expr, var)
                 merge!(subs_of_monom, new_subs)
             end
             merge!(subs, subs_of_monom)
+            continue
         end
 
         if oper === (/) || oper === (+)
@@ -130,6 +131,7 @@ function _filter_poly(expr, var)
                 new_subs, new_filtered = _filter_poly(monomial[j], var)
                 merge!(subs, new_subs)
             end
+            continue
         end
     end
 
