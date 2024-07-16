@@ -122,7 +122,7 @@ end
 
 
 function attract(lhs, var)
-    if n_func_occ(simplify(lhs), var) < n_func_occ(lhs, var)
+    if n_func_occ(simplify(lhs), var) <= n_func_occ(lhs, var)
         lhs = simplify(lhs)
     end
 
@@ -134,11 +134,26 @@ function attract(lhs, var)
     end
     lhs = attract_trig(lhs, var)
 
-    n_func_occ(lhs, var) == 1 && return lhs
+    n_func_occ(lhs, var) == 1 && return isolate(lhs, var)
 
-    throw("This system cannot be solved with the methods available to nl_solve. Try \
-a numerical method instead.")
+    lhs, sub = turn_to_poly(lhs, var)
+    if (isequal(sub, Dict()) || n_func_occ(lhs, collect(keys(sub))[1]) != 1) 
+        throw("This system cannot be solved with the methods available to nl_solve. Try \
+        a numerical method instead.")
+    end
 
+    new_var = collect(keys(sub))[1]
+    new_var_val = collect(values(sub))[1]
+
+    roots = isolate(lhs, new_var)
+    new_roots = []
+    for root in roots
+        new_sol = isolate(new_var_val - root, var)
+        push!(new_roots, new_sol)
+    end
+    new_roots = collect(Iterators.flatten(new_roots))
+
+    return new_roots
 end
 
 function nl_solve(lhs, var)
@@ -148,7 +163,7 @@ function nl_solve(lhs, var)
     elseif nx == 1
         return isolate(lhs, var)
     elseif nx > 1
-        return isolate(attract(lhs, var), var)
+        return attract(lhs, var)
     end
 
 end

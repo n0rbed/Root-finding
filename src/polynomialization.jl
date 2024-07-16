@@ -66,7 +66,7 @@ function add_sub(sub, arg, var, broken::Ref{Bool})
     arg_oper = Symbolics.operation(arg)
 
     friends = [sin, log, log2, log10, cos, tan, asin, acos, atan, exp]
-    if any(isequal(arg_oper, oper) for oper in friends) && n_occurrences(arg, var) > 0
+    if any(isequal(arg_oper, oper) for oper in friends) && n_func_occ(arg, var) == 1
         if isequal(sub, 0) 
             return true
         elseif !isequal(sub, arg)
