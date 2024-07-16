@@ -1,12 +1,4 @@
 using Symbolics
-# include("coeffs.jl")
-# include("univar.jl")
-# include("nemo_stuff.jl")
-# include("isoa_helpers.jl")
-# include("attract.jl")
-# include("solve_helpers.jl")
-# include("postprocess.jl")
-# include("main.jl")
 
 function isolate(lhs, var)
     rhs = Vector{Any}([0])
@@ -68,7 +60,7 @@ function isolate(lhs, var)
                 end
             else
                 lhs = args[2]
-                rhs = map(sol -> slog(sol)//slog(args[1]), rhs)
+                rhs = map(sol -> Symbolics.term(/, Symbolics.term(slog, sol), Symbolics.term(slog, args[1])), rhs)
             end
 
         elseif oper === (log)
@@ -169,6 +161,5 @@ function nl_solve(lhs, var)
 end
 
 @variables x y 
-lhs = 2sin(x+1)cos(x+1) + 1
 # nl_solve(lhs, x)
- 
+# attract(9^x + 3^x + 1, x)

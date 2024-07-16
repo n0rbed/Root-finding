@@ -1,5 +1,6 @@
 using Symbolics
 
+
 # tries to find polynomial substituions for transcendental functions
 # e.g. 1 + log(x) + log(x)^2 => 1 + X + X^2
 function turn_to_poly(expr, var)
@@ -17,7 +18,8 @@ function turn_to_poly(expr, var)
 
 
         if arg_oper === (^)
-            sub = isequal(trav_pow(arg, var, broken, sub), false) ? sub : trav_pow(arg, var, broken, sub)
+            tp = trav_pow(args, i, var, broken, sub)
+            sub = isequal(tp, false) ? sub : tp
             continue
         end
         if arg_oper === (*)
@@ -38,20 +40,42 @@ function turn_to_poly(expr, var)
     
 end
 
-function trav_pow(arg, var, broken, sub)
-    args_arg = Symbolics.arguments(arg)
-    isequal(add_sub(sub, args_arg[1], var, broken), false) && return false
-    return args_arg[1]
+function trav_pow(args, index, var, broken, sub)
+    args_arg = Symbolics.arguments(args[index])
+    base = args_arg[1]
+    power = args_arg[2]
+    
+    # case 1: log(x)^2 .... 9^x = 3^2^x = 3^2x = (3^x)^2
+    !isequal(add_sub(sub, base, var, broken), false) && power isa Integer && return base
+
+    # case 2: int^f(x)
+    # n_func_occ may not be strictly 1, we could attempt attracting it after solving
+    if base isa Integer && n_func_occ(power, var) == 1
+        factors = prime_factors(base)
+        length(factors) != 1 && return false
+        b, p = factors[1] 
+        new_b = b^power
+        sub = isequal(sub, 0) ? new_b : sub
+        if !isequal(sub, new_b)
+            broken[] = true
+            return false
+        end
+        new_b = Symbolics.term(^, new_b, p)
+        args[index] = new_b
+        return sub
+    end
+
+    return false
 end
 
 function trav_mult(arg, var, broken, sub)
     args_arg = Symbolics.arguments(arg)
-    for arg2 in args_arg 
+    for (i, arg2) in enumerate(args_arg)
         !Symbolics.iscall(arg2) && continue
 
         oper = Symbolics.operation(arg2)
         if oper === (^) 
-            sub = isequal(trav_pow(arg2, var, broken, sub), false) ? sub : trav_pow(arg2, var, broken, sub)
+            sub = isequal(trav_pow(args_arg, i, var, broken, sub), false) ? sub : trav_pow(args_arg, i, var, broken, sub)
             continue
         end
 
@@ -62,11 +86,7 @@ function trav_mult(arg, var, broken, sub)
 end
 
 function add_sub(sub, arg, var, broken::Ref{Bool})
-    !Symbolics.iscall(arg) && return false
-    arg_oper = Symbolics.operation(arg)
-
-    friends = [sin, log, log2, log10, cos, tan, asin, acos, atan, exp]
-    if any(isequal(arg_oper, oper) for oper in friends) && n_func_occ(arg, var) == 1
+    if contains_transcendental(arg, var)
         if isequal(sub, 0) 
             return true
         elseif !isequal(sub, arg)
@@ -80,8 +100,39 @@ function add_sub(sub, arg, var, broken::Ref{Bool})
     return (cond1 && cond2)
 end
 
+function contains_transcendental(arg, var, n_occ=1)
+    !Symbolics.iscall(arg) && return false
+    arg_oper = Symbolics.operation(arg)
 
+    friends = [sin, log, log2, log10, cos, tan, asin, acos, atan, exp]
+    if any(isequal(arg_oper, oper) for oper in friends) && n_func_occ(arg, var) == n_occ
+        return true
+    end
+    return false
+end
 
-@variables x
-expr = log(x)^2 + 3log(x) + 1
-turn_to_poly(expr, x)
+# prime_factors(9) = [(3, 2)] i.e. 3^2 
+# prime_factors(36) = [(2, 2), (3,2)] i.e. 2^2 + 3^2
+# a.i. generated
+function prime_factors(n::Integer)
+    factors = []
+    d = 2
+    while n > 1
+        count = 0
+        while n % d == 0
+            n ÷= d
+            count += 1
+        end
+        if count > 0
+            push!(factors, (d, count))
+        end
+        d += 1
+        if d * d > n
+            if n > 1
+                push!(factors, (n, 1))
+                break
+            end
+        end
+    end
+    return factors
+end
