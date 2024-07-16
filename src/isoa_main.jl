@@ -160,6 +160,6 @@ function nl_solve(lhs, var)
 
 end
 
-@variables x y 
+# @variables x y 
 # nl_solve(lhs, x)
 # attract(9^x + 3^x + 1, x)
