@@ -1,8 +1,7 @@
 using RootFinding, Symbolics
 using Test
 
-# Alex: can separate tests into several `@testset`s.
-# Yassin: How so?
+E = Base.MathConstants.e
 
 function sort_roots(roots)
     return sort(roots, lt = (x,y) -> real(x)==real(y) ? imag(x)<imag(y) : real(x)<real(y))
@@ -276,7 +275,6 @@ end
     rhs = sort_roots([1, -1])
     @test isequal(lhs, rhs)
 
-
     expr = 2^(x+1) + 5^(x+3)
     lhs = eval.(Symbolics.toexpr.(nl_solve(expr, x)))
     rhs = [(-im*Base.MathConstants.pi - log(2) + 3log(5))/(log(2) - log(5))]
@@ -297,7 +295,60 @@ end
     lhs = sort_roots(eval.(Symbolics.toexpr.(nl_solve(expr, x))))
     rhs = sort_roots([0, -1//15])
     @test all(lhs .≈ rhs)
+
+
+    expr = log(x)^2 + log(x) + 1
+    lhs = sort_roots(eval.(Symbolics.toexpr.(nl_solve(expr, x))))
+    rhs = sort_roots([E^(-(complex(-1))^(1/3)), E^((complex(-1))^(2/3))])
+    @test all(lhs .≈ rhs)
+
+    expr = 2log(x^2 + 1)^2 + 3log(x^2 + 1) + 1
+    lhs = sort_roots(eval.(Symbolics.toexpr.(nl_solve(expr, x))))
+    rhs = sort_roots([-im*ssqrt(1 - 1/E), im*ssqrt(1 - 1/E),
+        -im*ssqrt(1 - 1/ssqrt(E)), im*ssqrt(1 - 1/ssqrt(E))])
+    @test all(lhs .≈ rhs)
+
+
+    # this has c1 subbed, nl_solve still needs to incl c1
+    # much like sin and cos solutions (i.e. infinite solutions)
+    expr = 9^(x^2 + 1) + 3^(x^2 + 1) + 2
+    lhs = sort_roots(eval.(Symbolics.toexpr.(nl_solve(expr, x))))
+    rhs = sort_roots([-ssqrt(-1 + slog(1/2*(-1 - im*ssqrt(7)))/slog(3)),
+        ssqrt(-1 + slog(1/2*(-1 - im*ssqrt(7)))/slog(3)),
+        ssqrt(-1 + slog(1/2*(-1 + im*ssqrt(7)))/slog(3)),
+        -ssqrt(-1 + slog(1/2*(-1 + im*ssqrt(7)))/slog(3))])
+
+    @test all(lhs .≈ rhs)
 end
 
+@testset "Turn to poly" begin
+    @variables x
+    # does not sub because these can not be solved as polys
+    expr = log(x+1)^2 + log(x) + 1
+    expr, sub = turn_to_poly(expr, x)
+    @test isequal(sub, Dict())
+
+    expr = 2log(x)^2 + sin(x) + 1
+    expr, sub = turn_to_poly(expr, x)
+    @test isequal(sub, Dict())
+
+    
+    # subs and turns to polys
+    expr = log(x)^2 + log(x) + 1
+    expr, sub = turn_to_poly(expr, x)
+    @test check_polynomial(expr)
+
+    expr = 2log(x^2 + 1)^2 + 3log(x^2 + 1) + 1
+    expr, sub = turn_to_poly(expr, x)
+    @test check_polynomial(expr)
+
+    expr = sin(x^2)^2 + 3sin(x^2) + 1
+    expr, sub = turn_to_poly(expr, x)
+    @test check_polynomial(expr)
+
+    expr = 9^(x^2 + 1) + 3^(x^2 + 1) + 2
+    expr, sub = turn_to_poly(expr, x)
+    @test check_polynomial(expr)
+end
 
 

@@ -86,8 +86,8 @@ function isolate(lhs, var)
         elseif oper === (sin) || oper === (cos) || oper === (tan)
             rev_oper = Dict(sin=>asin, cos=>acos, tan=>atan)
             lhs = args[1]
-            new_var = gensym()
-            new_var = (@variables $(new_var))[1]
+            # make this global somehow so the user doesnt need to declare it on his own
+            new_var = eval(:(@variables $(gensym())))[1]
             rhs = map(sol -> Symbolics.term(rev_oper[oper], sol) + Symbolics.term(*, Base.MathConstants.pi, 2*new_var), rhs)
             @info string(new_var) * " ϵ" * " Ζ: e.g. 0, 1, 2..."
 
