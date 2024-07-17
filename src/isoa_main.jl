@@ -109,6 +109,8 @@ function isolate(lhs, var)
 
         lhs = simplify(lhs)
     end
+    # make sure postprocess_root doesnt expand constants here
+    # like π and ℯ
     return map(postprocess_root, rhs)
 end
 
@@ -161,5 +163,6 @@ function nl_solve(lhs, var)
 end
 
 # @variables x y 
+# nl_solve(sin(x) + 1, x)
 # nl_solve(lhs, x)
 # attract(9^x + 3^x + 1, x)
