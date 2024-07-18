@@ -131,6 +131,14 @@ end
     arr_known_roots = sort_roots(eval.([-2, 1, 1-im, 1+im]))
     @test all(arr_get_roots .≈ arr_known_roots)
     @test all(arr_solve_roots .≈ arr_known_roots)
+
+    expr = 386314 - 412163x - 357800(x^2) + 1029179(x^3) - 111927(x^4)
+    arr_get_roots = sort_roots(eval.(Symbolics.toexpr.(get_roots_deg4(expr, x))))
+    arr_solve_roots = sort_roots(eval.(Symbolics.toexpr.(solve(expr, x))))
+    arr_known_roots = sort_roots(eval.([0.5840484 + 0.4176250im, 0.5840484 - 0.4176250im,
+    8.788773679354421, -0.76177906049]))
+    @test all(isapprox.(arr_known_roots, arr_get_roots, atol=0.00001))
+    @test all(isapprox.(arr_known_roots, arr_solve_roots, atol=0.00001))
 end
 
 @testset "Complex coeffs univar" begin

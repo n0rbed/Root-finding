@@ -1,52 +1,6 @@
 using Symbolics
 import Symbolics: is_singleton, unwrap
 
-function f_numbers(n)
-    if n isa Num || n isa SymbolicUtils.BasicSymbolic ||
-     n isa Complex{Num} || n isa Symbolics.ComplexTerm || n isa Float64
-        return n
-    end
-
-    if n isa Integer
-        n = n > 100 && n isa Integer ? BigInt(n) : n
-        return n
-    end
-
-    if n isa Complex
-        real_part = f_numbers(n.re)
-        im_part = f_numbers(n.im)
-        return real_part + im_part*im
-    end
-
-    if n isa Rational && n isa Real
-        top = numerator(n) > 100 ? BigInt(numerator(n)) : numerator(n)
-        bottom = denominator(n) > 100 ? BigInt(denominator(n)) : denominator(n)
-
-        return top//bottom
-    end
-
-end
-
-function comp_rational(x,y)
-    try
-        r = x//y
-        return r
-    catch e
-        r = nothing
-        if x isa ComplexF64
-            real_p = real(x)
-            imag_p = imag(x)
-            r = Rational{BigInt}(real_p)//y
-            if !isequal(imag_p, 0)
-                r += (Rational{BigInt}(imag_p)//y)*im
-            end
-        elseif x isa Float64 
-            r = Rational{BigInt}(x)//y
-        end
-        return r
-    end
-end
-
 function get_roots_deg1(expression, x)
     subs, filtered_expr = filter_poly(expression, x)
     coeffs, constant = polynomial_coeffs(filtered_expr , [x])
