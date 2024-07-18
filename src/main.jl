@@ -1,23 +1,31 @@
 using Symbolics, Groebner, SymbolicUtils
 
 function solve(expr, x, multiplicities=false)
-    type_expr = typeof(expr)
     type_x = typeof(x)
     expr_univar = false
     x_univar = false
 
-    if type_expr == Num || type_expr == SymbolicUtils.BasicSymbolic{Real} || 
-        type_expr == Complex{Num} || type_expr == Symbolics.ComplexTerm{Real}
-        expr_univar = true
-    end
 
     if (type_x == Num || type_x == SymbolicUtils.BasicSymbolic{Real})
         x_univar = true
+        @assert Symbolics.is_singleton(Symbolics.unwrap(x)) "Expected a variable, got $x"
+    else
+        for var in x
+            @assert Symbolics.is_singleton(Symbolics.unwrap(var)) "Expected a variable, got $x"
+        end
+    end
+
+    if !(expr isa Vector) 
+        expr_univar = true
+        check_expr_validity(expr)
+    else
+        for e in expr
+            check_expr_validity(e)
+        end
     end
 
 
     if x_univar
-        @assert Symbolics.is_singleton(Symbolics.unwrap(x)) "Expected a variable, got $x"
 
         sols = []
         if expr_univar
@@ -31,10 +39,6 @@ function solve(expr, x, multiplicities=false)
     end
 
     if !expr_univar && !x_univar
-        for var in x
-            @assert Symbolics.is_singleton(Symbolics.unwrap(var)) "Expected a variable, got $x"
-        end
-
         sols = solve_multivar(expr, x, multiplicities)
         for sol in sols
             for var in x

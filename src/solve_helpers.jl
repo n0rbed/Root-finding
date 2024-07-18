@@ -76,6 +76,16 @@ end
 Base.show(io::IO, r::RootsOf) = print(io, "roots_of(", r.poly, ", ", x, ")")
 
 
+function check_expr_validity(expr)
+    type_expr = typeof(expr)
+
+    if type_expr == Num || type_expr == SymbolicUtils.BasicSymbolic{Real} || 
+    type_expr == Complex{Num} || type_expr == Symbolics.ComplexTerm{Real}
+        return true
+    end
+    @assert isequal(expr, 0) "Invalid input"
+end
+
 # multivar stuff
 function contains_var(var, vars)
     for variable in vars
