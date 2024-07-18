@@ -1,4 +1,14 @@
 using Symbolics, Groebner, SymbolicUtils
+include("coeffs.jl")
+include("nemo_stuff.jl")
+include("solve_helpers.jl")
+include("postprocess.jl")
+include("univar.jl")
+include("isoa_helpers.jl")
+include("polynomialization.jl")
+include("attract.jl")
+include("isoa_main.jl")
+
 
 function solve(expr, x, multiplicities=false)
     type_x = typeof(x)
@@ -236,5 +246,6 @@ function solve_multivar(eqs::Vector{Num}, vars::Vector{Num}, mult=false)
     return solutions
 end
 
-@variables x
-solve(x^2 + 1, x)
+@variables x 
+expr = sqrt(log(cbrt(x^2)))
+nl_solve(expr, x)
