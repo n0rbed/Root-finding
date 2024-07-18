@@ -1,9 +1,9 @@
 using Symbolics, Test
 
 """
-    detect_doubleangle1(arg, variable)
+    detect_doubleangle1(arg, var)
 
-Detects if 2sin(x)cos(x) is present in any form in an expression
+Detects if ``2sin(x)cos(x)`` is present in any form in an expression
 However, this function is currently useless since we can just 
 apply the rewrite rule to the expression and see if it works or not.
 For future reference, see if there are any positives of detecting the presence
@@ -12,7 +12,7 @@ false if not.
 
 # Arguments
 - arg: Should be SymbolicUtils.BasicSymbolic{Real} only.
-- variable: Num and should satisfy Symbolics.is_singleton
+- var: Num and should satisfy Symbolics.is_singleton
 
 # Examples
 ```jldoctest
@@ -54,7 +54,7 @@ end
 """
     detect_trig(lhs, var)
 
-Traverses lhs arg by arg (if oper === (+)) and
+Traverses lhs arg by arg (``if oper === (+)``) and
 calls detect_(any trig identity detector) on it and
 if any detection function returns true, the whole
 function returns true. P.S. currently only
@@ -63,7 +63,7 @@ Returns true if found, false if not.
 
 # Arguments
 - lhs: A Symbolics Num expression.
-- variable: Num and should satisfy Symbolics.is_singleton
+- var: Num and should satisfy Symbolics.is_singleton
 
 # Examples
 ```jldoctest
@@ -103,7 +103,7 @@ false if not.
 
 # Arguments
 - lhs: A Symbolics Num expression.
-- variable: Num and should satisfy Symbolics.is_singleton
+- var: Num and should satisfy Symbolics.is_singleton
 
 # Examples
 ```jldoctest
@@ -137,13 +137,13 @@ end
     detect_exponential(lhs, var)
 
 Traverses an expression and attempts to match the
-expression to ab^f(x) + cd^g(x). Hence why it
+expression to ``a*b^f(x) + c*d^g(x)``. Hence why it
 expects only 2 arguments in the input expression.
 Returns true if found, false if not.
 
 # Arguments
 - lhs: A Symbolics Num expression.
-- variable: Num and should satisfy Symbolics.is_singleton
+- var: Num and should satisfy Symbolics.is_singleton
 
 # Examples
 ```jldoctest
@@ -185,12 +185,12 @@ end
     attract_logs(lhs, var)
 
 Rewrites any 2 logs in lhs where the log contains the
-input variable var. so log(x) + log(y) is not attracted.
+input variable var. so ``log(x) + log(y)`` is not attracted.
 When attracted, it returns an slog.
 
 # Arguments
 - lhs: A Symbolics Num expression.
-- variable: Num and should satisfy Symbolics.is_singleton
+- var: Num and should satisfy Symbolics.is_singleton
 
 # Examples
 ```jldoctest
@@ -215,19 +215,20 @@ end
 """
     attract_exponential(lhs, var)
 
-Rewrites ab^f(x) + cd^g(x) into 
-f(x) * log(b) - g(x) * log(d) + log(-a/c)
+Rewrites ``a*b^f(x) + c*d^g(x)`` into 
+``f(x) * log(b) - g(x) * log(d) + log(-a/c)``
 Which is a solvable polynomial, hence reducing the smart
 number of occurrences of x in the expression.
 
 # Arguments
 - lhs: A Symbolics Num expression.
-- variable: Num and should satisfy Symbolics.is_singleton
+- var: Num and should satisfy Symbolics.is_singleton
 
 # Examples
 ```jldoctest
 julia> attract_exponential(2^(x+1) + 5^(x+3), x)
 Main.RootFinding.slog(2) + log(complex(-1)) - 3Main.RootFinding.slog(5) + x*Main.RootFinding.slog(2) - x*Main.RootFinding.slog(5)
+```
 """
 function attract_exponential(lhs, var)
     lhs = Symbolics.unwrap(lhs)
@@ -252,7 +253,7 @@ of x in the lhs.
 
 # Arguments
 - lhs: A Symbolics Num expression.
-- variable: Num and should satisfy Symbolics.is_singleton
+- var: Num and should satisfy Symbolics.is_singleton
 
 # Examples
 ```jldoctest
