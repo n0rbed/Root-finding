@@ -128,10 +128,11 @@ function get_roots(expression, x)
 
     degree = Symbolics.degree(simplify(real(filtered_expr)), x)
 
-    if degree == 0 && expression == 0
+    if degree == 0 && isequal(expression, 0)
         return [x]
-    elseif degree == 0 && expression != 0
-        throw("Not a valid statement")
+    elseif degree == 0 && !isequal(expression, 0)
+        # throw("Not a valid statement")
+        return [] # no roots!
     end
 
 
