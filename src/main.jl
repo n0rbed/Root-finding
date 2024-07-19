@@ -58,9 +58,8 @@ function solve_univar(expression, x, mult=false)
 
     # handle multiplicities, i.e. (x+1)^20
     if Symbolics.iscall(expression)
-        exp = Symbolics.unwrap(simplify(expression))
-        args = arguments(exp)
-        operation = SymbolicUtils.operation(exp)
+        args = arguments(expression)
+        operation = SymbolicUtils.operation(expression)
         if isequal(operation, ^) && args[2] isa Int64
             expression = Symbolics.wrap(args[1])
             mult_n = args[2]
@@ -235,3 +234,6 @@ function solve_multivar(eqs::Vector{Num}, vars::Vector{Num}, mult=false)
 
     return solutions
 end
+
+@variables a b c d e x
+# solve(-19e + 93d*x + 7c*(x^2) + 45b*(x^3) - 37a*(x^4), x)

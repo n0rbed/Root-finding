@@ -89,13 +89,22 @@ end
 
 
 function f_numbers(n)
-    if n isa Num || n isa SymbolicUtils.BasicSymbolic ||
-     n isa Complex{Num} || n isa Symbolics.ComplexTerm || n isa Float64
+    n = Symbolics.unwrap(n)
+    if n isa Symbolics.ComplexTerm || n isa Float64 || n isa Irrational
+        return n
+    end
+
+    if n isa SymbolicUtils.BasicSymbolic
+        !Symbolics.iscall(n) && return n
+        args = arguments(n)
+        for i in eachindex(args)
+            args[i] = f_numbers(args[i])
+        end
         return n
     end
 
     if n isa Integer
-        n = abs(n) > 1000 && n isa Integer ? BigInt(n) : n
+        n = abs(n) > 10 && n isa Integer ? BigInt(n) : n
         return n
     end
 
@@ -106,8 +115,8 @@ function f_numbers(n)
     end
 
     if n isa Rational && n isa Real
-        top = numerator(n) > 100 ? BigInt(numerator(n)) : numerator(n)
-        bottom = denominator(n) > 100 ? BigInt(denominator(n)) : denominator(n)
+        top = numerator(n) > 10 ? BigInt(numerator(n)) : numerator(n)
+        bottom = denominator(n) > 10 ? BigInt(denominator(n)) : denominator(n)
 
         return top//bottom
     end

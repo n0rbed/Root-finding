@@ -3,6 +3,17 @@ using Symbolics
 # TODO(Alex): it is not clear to me at the moment if we should use
 # Symbolics.term or TermInterface.maketerm
 
+"""
+    sub(subs, place_to_sub)
+Helper function for filter_poly. Generates a symbolics variable and adds it
+to subs (changes the original array passed to the sub function). returns the
+subbed value so the filter_poly function could change it in its scope.
+
+# Arguments
+- subs: Vector of dicts which consist of var_subbed => value_subbed in filter_poly
+- place_to_sub: The place which should be substituted by a new variable.
+
+"""
 function sub(subs, place_to_sub)
     sub_var = gensym()
     sub_var = (@variables $sub_var)[1]
@@ -13,6 +24,21 @@ function sub(subs, place_to_sub)
     return place_to_sub
 end
 
+"""
+    clean_f(filtered_expr, var, subs)
+
+Helper function for filter_poly which is called directly before returning
+the filtered_expression. This function aims to get the filtered expressions
+resulting from filter_poly ready to get used by solve, get_roots, and any other
+function in the library. An important feature of it is that it simplifies fractions
+to make the output "valid" in the eyes of factor_use_nemo and other Nemo functions.
+
+# Arguments
+- filtered_expr: The output from _filter_poly.
+- var: The variable which is filtered for.
+- subs: Vector of dicts which consist of var_subbed => value_subbed in _filter_poly.
+
+"""
 function clean_f(filtered_expr, var, subs)
     filtered_expr = simplify_fractions(simplify(real(filtered_expr)))
     unwrapped_f = Symbolics.unwrap(filtered_expr)
@@ -30,6 +56,24 @@ function clean_f(filtered_expr, var, subs)
     return filtered_expr
 end
 
+"""
+    filter_stuff(expr)
+Helper function for _filter_poly and filter_poly which aims to filter
+constants and things that dont contain variables like Symbolics.term(sqrt, 2).
+Filters only if the passed expr is scary (i.e. not a Rational or Int).
+
+# Arguments
+- expr: The detected constant in _filter_poly
+
+# Examples
+```jldoctest
+julia> filter_stuff(Symbolics.term(sqrt, 2))
+(Dict{Any, Any}(var"##278" => sqrt(2)), var"##278")
+
+julia> filter_stuff(123)
+(Dict{Any, Any}(), 123)
+```
+"""
 function filter_stuff(expr)
 
     if expr isa Integer || expr isa Rational
@@ -44,6 +88,29 @@ function filter_stuff(expr)
     end
 end
 
+"""
+    _filter_poly(expr, var)
+
+Main mechanism for filter_poly. Traverses arguments as deep 
+as needed/makes sense by recalling itself as many times as necessary.
+Output is then returned to filter_poly. This function should not be used
+(although functional) instead of filter_poly since it does not contain
+the final touch of clean_f, which is needed if the output is going to get passed
+to other functions.
+
+# Arguments
+- expr: Expression to be filtered passed from filter_poly
+- var: Var that the expression should be filtered with respect to.
+
+# Examples
+```jldoctest
+julia> _filter_poly(x + sqrt(2), x)
+(Dict{Any, Any}(var"##239" => 1.4142135623730951), var"##239" + x)
+
+julia> RootFinding._filter_poly(x*sqrt(2), x)
+(Dict{Any, Any}(var"##240" => 1.4142135623730951), var"##240"*x)
+```
+"""
 function _filter_poly(expr, var)
     expr = Symbolics.unwrap(expr)
     vars = Symbolics.get_variables(expr)
@@ -141,6 +208,31 @@ function _filter_poly(expr, var)
     return subs, expr
 end
 
+
+"""
+    filter_poly(og_expr, var)
+
+Filters polynomial expressions from weird irrationals that mess up
+the functionality of other helper functions for our solvers such as
+polynomial_coeffs and factor_use_nemo.
+
+# Arguments
+- og_expr: Original passed expression. This is deepcopied so that the
+user's expression is not altered unwillingly.
+- var: Var that the expression should be filtered with respect to.
+
+# Examples
+```jldoctest
+julia> filter_poly(x + 2im, x)
+(Dict{Any, Any}(var"##244" => im), 2var"##244" + x)
+
+julia> filter_poly((1/im)*x + 3*y*z, x)
+(Dict{Any, Any}(var"##245" => -1.0, var"##246" => im), 3y*z + var"##245"*var"##246"*x)
+
+julia> filter_poly((x+1)*Symbolics.term(log, 3), x)
+(Dict{Any, Any}(var"##247" => log(3)), var"##247"*(1 + x))
+```
+"""
 function filter_poly(og_expr, var)
     expr = deepcopy(og_expr)
     expr = Symbolics.unwrap(expr)
@@ -165,6 +257,31 @@ function filter_poly(og_expr, var)
 end
 
 
+"""
+    sdegree(coeffs, var)
+Gets the degree of a polynomial by traversing the `coeffs`
+output from polynomial_coeffs.
+
+# Arguments
+- coeffs: output from polynomial_coeffs
+- var: var present in polynomial_coeffs
+
+# Examples
+```jldoctest
+julia> coeffs, constant = polynomial_coeffs(x^2 + x + 1, [x])
+(Dict{Any, Any}(x^2 => 1, x => 1, 1 => 1), 0)
+
+julia> sdegree(coeffs, x)
+2
+
+
+julia> coeffs, constant = polynomial_coeffs(x^12 + 3x^2, [x])
+(Dict{Any, Any}(x^2 => 3, x^12 => 1), 0)
+
+julia> sdegree(coeffs, x)
+12
+```
+"""
 function sdegree(coeffs, var)
     degree = 0
     vars = collect(keys(coeffs))
@@ -184,6 +301,10 @@ function sdegree(coeffs, var)
     end
     return degree
 end
+
+
+
+########## NOT USED ########## 
 
 function lead_term(expr, var)
     subs, expr = filter_poly(expr, var)

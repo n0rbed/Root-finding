@@ -1,8 +1,6 @@
 using Symbolics
 
 
-# tries to find polynomial substituions for transcendental functions
-# e.g. 1 + log(x) + log(x)^2 => 1 + X + X^2
 """
     turn_to_poly(expr, var)
 
