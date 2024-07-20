@@ -115,8 +115,8 @@ function f_numbers(n)
     end
 
     if n isa Rational && n isa Real
-        top = numerator(n) > 10 ? BigInt(numerator(n)) : numerator(n)
-        bottom = denominator(n) > 10 ? BigInt(denominator(n)) : denominator(n)
+        top = abs(numerator(n)) > 10 ? BigInt(numerator(n)) : numerator(n)
+        bottom = abs(denominator(n)) > 10 ? BigInt(denominator(n)) : denominator(n)
 
         return top//bottom
     end
@@ -124,6 +124,7 @@ function f_numbers(n)
 end
 
 function comp_rational(x,y)
+    x, y  = f_numbers(x), f_numbers(y)
     try
         r = x//y
         return r

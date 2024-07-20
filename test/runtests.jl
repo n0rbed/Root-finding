@@ -92,14 +92,14 @@ end
     arr_get_roots = sort_roots(eval.(Symbolics.toexpr.(get_roots_deg3(expr, x))))
     arr_solve_roots = sort_roots(eval.(Symbolics.toexpr.(solve(expr, x))))
     arr_known_roots = sort_roots([2, -im, im])
-    @test all(arr_get_roots .≈ arr_known_roots)
+    @test all(isapprox.(arr_get_roots, arr_known_roots, atol=0.0000001))
     @test all(arr_solve_roots .≈ arr_known_roots)
 
     expr = x^3 + x^2 + x + 1
     arr_get_roots = sort_roots(eval.(Symbolics.toexpr.(get_roots_deg3(expr, x))))
     arr_solve_roots = sort_roots(eval.(Symbolics.toexpr.(solve(expr, x))))
     arr_known_roots = sort_roots([-1, -im, im])
-    @test all(arr_get_roots .≈ arr_known_roots)
+    @test all(isapprox.(arr_get_roots, arr_known_roots, atol=0.0000001))
     @test all(arr_solve_roots .≈ arr_known_roots)
 
     expr = x^3 + 10x

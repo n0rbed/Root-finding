@@ -1,5 +1,10 @@
 using Symbolics, Groebner, SymbolicUtils
 
+"""
+    solve(expr, x, multiplicities=false)
+This is the main solve function which directs all input
+to their appropriate solvers. 
+"""
 function solve(expr, x, multiplicities=false)
     type_x = typeof(x)
     expr_univar = false
@@ -58,8 +63,9 @@ function solve_univar(expression, x, mult=false)
 
     # handle multiplicities, i.e. (x+1)^20
     if Symbolics.iscall(expression)
-        args = arguments(expression)
-        operation = SymbolicUtils.operation(expression)
+        expr = Symbolics.simplify(deepcopy(expression))
+        args = arguments(expr)
+        operation = SymbolicUtils.operation(expr)
         if isequal(operation, ^) && args[2] isa Int64
             expression = Symbolics.wrap(args[1])
             mult_n = args[2]
@@ -236,4 +242,5 @@ function solve_multivar(eqs::Vector{Num}, vars::Vector{Num}, mult=false)
 end
 
 @variables a b c d e x
-# solve(-19e + 93d*x + 7c*(x^2) + 45b*(x^3) - 37a*(x^4), x)
+f = -19e + 93d*x + 7c*(x^2) + 45b*(x^3) - 10a*(x^4)
+#get_roots_deg4(f, x)

@@ -1,15 +1,4 @@
 using Symbolics
-include("coeffs.jl")
-include("nemo_stuff.jl")
-include("solve_helpers.jl")
-include("postprocess.jl")
-include("univar.jl")
-include("isoa_helpers.jl")
-include("polynomialization.jl")
-include("attract.jl")
-include("main.jl")
-
-
 
 function isolate(lhs, var)
     rhs = Vector{Any}([0])
@@ -175,4 +164,4 @@ end
 
 @variables x
 expr = sqrt(log(cbrt(x^2)))
-nl_solve(expr, x)
+# nl_solve(expr, x)

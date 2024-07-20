@@ -27,16 +27,16 @@ end
 """
     clean_f(filtered_expr, var, subs)
 
-Helper function for filter_poly which is called directly before returning
-the filtered_expression. This function aims to get the filtered expressions
-resulting from filter_poly ready to get used by solve, get_roots, and any other
+Helper function for `filter_poly` which is called directly before returning
+the `filtered_expression`. This function aims to get the filtered expressions
+resulting from `filter_poly` ready to get used by solve, `get_roots`, and any other
 function in the library. An important feature of it is that it simplifies fractions
-to make the output "valid" in the eyes of factor_use_nemo and other Nemo functions.
+to make the output "valid" in the eyes of `factor_use_nemo` and other Nemo functions.
 
 # Arguments
-- filtered_expr: The output from _filter_poly.
+- `filtered_expr`: The output from `_filter_poly`.
 - var: The variable which is filtered for.
-- subs: Vector of dicts which consist of var_subbed => value_subbed in _filter_poly.
+- subs: Vector of dicts which consist of `var_subbed` => `value_subbed` in `_filter_poly`.
 
 """
 function clean_f(filtered_expr, var, subs)
