@@ -2,8 +2,79 @@ using Symbolics, Groebner, SymbolicUtils
 
 """
     solve(expr, x, multiplicities=false)
-This is the main solve function which directs all input
-to their appropriate solvers. 
+The base solver chooses the appropriate solver after ensuring that the input is valid (i.e., it does some assertions).
+All the examples in the REPL in the documentation of the other solvers can be repeated using RootFinding.solve too.
+This makes it more convenient For future reference, we intend to add nl solve in this solver too. We can do this by
+first checking if the input is a valid polynomial, if not, attempt nl solve.
+
+# Available solvers
+- `solve_univar`
+- `solve_multivar`
+- `solve_multipoly`
+- TODO: `nl_solve`
+
+# Arguments
+- expr: Could be a single univar Symbolics expression in the form of a poly 
+or multiple univar expressions or multiple multivar polys or a transcendental nonlinear function
+which is solved by nl_solve.
+
+- x: Could be a single variable or an array of variables which should be solved
+
+- multiplicities: Should the output be printed `n` times where `n` is the number of occurrence of the root?
+Say we have `(x+1)^2`, we then have 2 roots `x = -1`, by default the output is `[-1]`, If multiplicites is inputed as true,
+then the output is `[-1, -1]`.
+
+# Examples
+
+## Example 1
+```jldoctest
+julia> solve(x^7 - 1, x)
+2-element Vector{Any}:
+roots_of((1//1) + x + x^2 + x^3 + x^4 + x^5 + x^6)
+ 1//1
+```
+
+## Example 2
+```jldoctest
+julia> expr = expand((x + 3)*(x^2 + 2x + 1)*(x + 2))
+6 + 17x + 17(x^2) + 7(x^3) + x^4
+
+julia> solve(expr, x)
+3-element Vector{Any}:
+ -2//1
+ -1//1
+ -3//1
+
+julia> solve(expr, x, true)
+4-element Vector{Any}:
+ -2//1
+ -1//1
+ -1//1
+ -3//1
+```
+
+## Example 3
+```jldoctest
+julia> eqs = [x+y^2+z, z*x*y, z+3x+y]
+3-element Vector{Num}:
+ x + z + y^2
+       x*y*z
+  3x + y + z
+
+julia> solve(eqs, [x,y,z])
+3-element Vector{Any}:
+ Dict{Num, Any}(z => 0//1, y => 0//1, x => 0//1)
+ Dict{Num, Any}(z => 0//1, y => 1//3, x => -1//9)
+ Dict{Num, Any}(z => -1//1, y => 1//1, x => 0//1)
+```
+
+
+## Example 4
+```jldoctest
+julia> solve([x-1, x^3 - 1, x^2 - 1, (x-1)^20], x)
+1-element Vector{Rational{BigInt}}:
+ 1
+```
 """
 function solve(expr, x, multiplicities=false)
     type_x = typeof(x)
