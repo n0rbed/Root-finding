@@ -4,19 +4,21 @@ using Symbolics, Groebner, SymbolicUtils
     solve(expr, x, multiplicities=false)
 The base solver chooses the appropriate solver after ensuring that the input is valid (i.e., it does some assertions).
 All the examples in the REPL in the documentation of the other solvers can be repeated using RootFinding.solve too.
-This makes it more convenient For future reference, we intend to add nl solve in this solver too. We can do this by
-first checking if the input is a valid polynomial, if not, attempt nl solve.
+This makes it more convenient for the user. The solver first checks if the input is a valid polynomial, if not, attempt solving
+by attraction and isolation (`ia_solve`). This only works when the input is a single expression and the user wants the answer
+in terms of a single variable. Say log(x) - a == 0 gives us [e^a] using ia_solve. If the input is anything else in the form of a poly,
+the solver uses 3 polynomial solvers appropriately depending on the input. 
 
 # Available solvers
 - `solve_univar`
 - `solve_multivar`
 - `solve_multipoly`
-- TODO: `nl_solve`
+- `ia_solve`
 
 # Arguments
 - expr: Could be a single univar Symbolics expression in the form of a poly 
 or multiple univar expressions or multiple multivar polys or a transcendental nonlinear function
-which is solved by nl_solve.
+which is solved by isolation, attraction and collection.
 
 - x: Could be a single variable or an array of variables which should be solved
 
@@ -105,7 +107,7 @@ function solve(expr, x, multiplicities=false)
 
         sols = []
         if expr_univar
-            sols = check_poly_inunivar(expr, x) ? solve_univar(expr, x, multiplicities) : nl_solve(expr, x)
+            sols = check_poly_inunivar(expr, x) ? solve_univar(expr, x, multiplicities) : ia_solve(expr, x)
         else
             exprs_ispoly = []
             for e in expr

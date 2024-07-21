@@ -150,7 +150,7 @@ function attract(lhs, var)
     return new_roots
 end
 
-function nl_solve(lhs, var)
+function ia_solve(lhs, var)
     nx = n_func_occ(lhs, var)
     if nx == 0
         throw("Var not present in given expression.")
