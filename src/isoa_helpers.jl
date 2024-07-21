@@ -105,16 +105,6 @@ function n_func_occ(expr, var)
 end
 
 
-
-
-
-function check_poly_inunivar(poly, var)
-    subs, filtered = filter_poly(poly, var)
-    coeffs, constant = polynomial_coeffs(filtered, [var])
-    return isequal(constant, 0)
-end
-
-
 function arg_contains_log(arg, var)
     oper = Symbolics.operation(arg)
     isequal(oper, log) && return true

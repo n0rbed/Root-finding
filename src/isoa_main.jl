@@ -132,7 +132,7 @@ function attract(lhs, var)
 
     lhs, sub = turn_to_poly(lhs, var)
     if (isequal(sub, Dict()) || n_func_occ(lhs, collect(keys(sub))[1]) != 1) 
-        throw("This system cannot be solved with the methods available to nl_solve. Try \
+        throw("This expression cannot be solved with the methods available to solve. Try \
         a numerical method instead.")
     end
 

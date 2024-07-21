@@ -78,15 +78,21 @@ Base.show(io::IO, r::RootsOf) = print(io, "roots_of(", r.poly, ", ", x, ")")
 
 function check_expr_validity(expr)
     type_expr = typeof(expr)
+    valid_type = false
 
     if type_expr == Num || type_expr == SymbolicUtils.BasicSymbolic{Real} || 
     type_expr == Complex{Num} || type_expr == Symbolics.ComplexTerm{Real}
-        return true
+        valid_type = true
     end
+    @assert valid_type && return true
     @assert isequal(expr, 0) "Invalid input"
 end
 
-
+function check_poly_inunivar(poly, var)
+    subs, filtered = filter_poly(poly, var)
+    coeffs, constant = polynomial_coeffs(filtered, [var])
+    return isequal(constant, 0)
+end
 
 function f_numbers(n)
     n = Symbolics.unwrap(n)

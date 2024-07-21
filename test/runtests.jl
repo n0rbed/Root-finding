@@ -270,63 +270,81 @@ end
 @testset "NL solve" begin
     @variables a b c d e x
     lhs = nl_solve(a*x^b + c, x)[1]
+    lhs2 = solve(a*x^b + c, x)[1]
     rhs = Symbolics.term(^, -c.val/a.val, 1/b.val) 
     #@test isequal(lhs, rhs)
     
     expr = x + 2
     lhs = eval.(Symbolics.toexpr.(nl_solve(expr, x)))
+    lhs_solve = eval.(Symbolics.toexpr.(solve(expr, x)))
     rhs = [-2]
     @test lhs[1] ≈ rhs[1]
+    @test lhs_solve[1] ≈ rhs[1]
 
     expr = sqrt(log(cbrt(x^2)))
     lhs = sort_roots(eval.(Symbolics.toexpr.(nl_solve(expr, x))))
+    lhs_solve = sort_roots(eval.(Symbolics.toexpr.(solve(expr, x))))
     rhs = sort_roots([1, -1])
     @test isequal(lhs, rhs)
 
     expr = 2^(x+1) + 5^(x+3)
     lhs = eval.(Symbolics.toexpr.(nl_solve(expr, x)))
+    lhs_solve = eval.(Symbolics.toexpr.(solve(expr, x)))
     rhs = [(-im*Base.MathConstants.pi - log(2) + 3log(5))/(log(2) - log(5))]
     @test lhs[1] ≈ rhs[1]
+    @test lhs_solve[1] ≈ rhs[1]
 
     expr = 3*2^(x+3) + 2*5^(x+1)
     lhs = eval.(Symbolics.toexpr.(nl_solve(expr, x)))
+    lhs_solve = eval.(Symbolics.toexpr.(solve(expr, x)))
     rhs = [(-im*Base.MathConstants.pi + log(5) - log(12))/(log(2) - log(5))]
     @test lhs[1] ≈ rhs[1]
+    @test lhs_solve[1] ≈ rhs[1]
 
     expr = exp(2x)*exp(x^2 + 3) + 3
     lhs = sort_roots(eval.(Symbolics.toexpr.(nl_solve(expr, x))))
+    lhs_solve = sort_roots(eval.(Symbolics.toexpr.(solve(expr, x))))
     rhs = sort_roots([-1 + sqrt(-2 + im*Base.MathConstants.pi + log(3)),
         -1 - sqrt(-2 + im*Base.MathConstants.pi + log(3))])
     @test all(lhs .≈ rhs)
+    @test all(lhs_solve .≈ rhs)
 
     expr = x/5 + 3x^2
     lhs = sort_roots(eval.(Symbolics.toexpr.(nl_solve(expr, x))))
+    lhs_solve = sort_roots(eval.(Symbolics.toexpr.(solve(expr, x))))
     rhs = sort_roots([0, -1//15])
     @test all(lhs .≈ rhs)
+    @test all(lhs_solve .≈ rhs)
 
 
     expr = log(x)^2 + log(x) + 1
     lhs = sort_roots(eval.(Symbolics.toexpr.(nl_solve(expr, x))))
+    lhs_solve = sort_roots(eval.(Symbolics.toexpr.(solve(expr, x))))
     rhs = sort_roots([E^(-(complex(-1))^(1/3)), E^((complex(-1))^(2/3))])
     @test all(lhs .≈ rhs)
+    @test all(lhs_solve .≈ rhs)
 
     expr = 2log(x^2 + 1)^2 + 3log(x^2 + 1) + 1
     lhs = sort_roots(eval.(Symbolics.toexpr.(nl_solve(expr, x))))
+    lhs_solve = sort_roots(eval.(Symbolics.toexpr.(solve(expr, x))))
     rhs = sort_roots([-im*ssqrt(1 - 1/E), im*ssqrt(1 - 1/E),
         -im*ssqrt(1 - 1/ssqrt(E)), im*ssqrt(1 - 1/ssqrt(E))])
     @test all(lhs .≈ rhs)
+    @test all(lhs_solve .≈ rhs)
 
 
     # this has c1 subbed, nl_solve still needs to incl c1
     # much like sin and cos solutions (i.e. infinite solutions)
     expr = 9^(x^2 + 1) + 3^(x^2 + 1) + 2
     lhs = sort_roots(eval.(Symbolics.toexpr.(nl_solve(expr, x))))
+    lhs_solve = sort_roots(eval.(Symbolics.toexpr.(solve(expr, x))))
     rhs = sort_roots([-ssqrt(-1 + slog(1/2*(-1 - im*ssqrt(7)))/slog(3)),
         ssqrt(-1 + slog(1/2*(-1 - im*ssqrt(7)))/slog(3)),
         ssqrt(-1 + slog(1/2*(-1 + im*ssqrt(7)))/slog(3)),
         -ssqrt(-1 + slog(1/2*(-1 + im*ssqrt(7)))/slog(3))])
 
     @test all(lhs .≈ rhs)
+    @test all(lhs_solve .≈ rhs)
 end
 
 @testset "Turn to poly" begin

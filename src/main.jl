@@ -105,9 +105,14 @@ function solve(expr, x, multiplicities=false)
 
         sols = []
         if expr_univar
-            sols = solve_univar(expr, x, multiplicities)
+            sols = check_poly_inunivar(expr, x) ? solve_univar(expr, x, multiplicities) : nl_solve(expr, x)
         else
-            sols = solve_multipoly(expr, x, multiplicities)
+            exprs_ispoly = []
+            for e in expr
+                push!(e, check_poly_inunivar(e, x))
+            end
+
+            sols = all(exprs_ispoly) ? solve_multipoly(expr, x, multiplicities) : throw("Solve can not solve this input currently")
         end
 
         sols = map(postprocess_root, sols)
@@ -115,6 +120,12 @@ function solve(expr, x, multiplicities=false)
     end
 
     if !expr_univar && !x_univar
+        for e in expr
+            for var in x
+                @assert check_poly_inunivar(e, var) "This system can not be currently solved by solve."
+            end
+        end
+
         sols = solve_multivar(expr, x, multiplicities)
         for sol in sols
             for var in x
