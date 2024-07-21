@@ -2,41 +2,40 @@ using Symbolics, Groebner, SymbolicUtils
 
 """
     solve(expr, x, multiplicities=false)
-The base solver chooses the appropriate solver after ensuring that the input is valid (i.e., it does some assertions).
+
+Solve is a function which equates the input expression/s to 0 and solves for the input variable/s x (Symbolics variables).
+It can take a single variable, a vector of variables, a single expression, an array of expressions.
+The base solver has multiple solvers which chooses from depending on the the type of input (multiple/uni var and multiple/single expression)
+only after ensuring that the input is valid.
+
 All the examples in the REPL in the documentation of the other solvers can be repeated using RootFinding.solve too.
 This makes it more convenient for the user. The solver first checks if the input is a valid polynomial, if not, attempt solving
-by attraction and isolation (`ia_solve`). This only works when the input is a single expression and the user wants the answer
-in terms of a single variable. Say log(x) - a == 0 gives us [e^a] using ia_solve. If the input is anything else in the form of a poly,
+by attraction and isolation (`ia_solve`) which is inspired by the paper in the References section. This only works when the input is a single expression and the user wants the answer
+in terms of a single variable. Say `log(x) - a == 0` gives us `[e^a]` using ia_solve. If the input is anything else in the form of a poly,
 the solver uses 3 polynomial solvers appropriately depending on the input. 
 
 # Available solvers
-- `solve_univar`
-- `solve_multivar`
-- `solve_multipoly`
-- `ia_solve`
+- `solve_univar` (single variable single polynomial)
+- `solve_multivar` (multiple variables multiple polynomials)
+- `solve_multipoly` (single variable multiple polynomials)
+- `ia_solve` (not in the form of a polynomial, uses isolation and attraction in order to reshape the expression in the form of a poly)
 
 # Arguments
-- expr: Could be a single univar Symbolics expression in the form of a poly 
-or multiple univar expressions or multiple multivar polys or a transcendental nonlinear function
-which is solved by isolation, attraction and collection.
+- expr: Could be a single univar Symbolics expression in the form of a poly or multiple univar expressions or multiple multivar polys or a transcendental nonlinear function which is solved by isolation, attraction and collection.
 
 - x: Could be a single variable or an array of variables which should be solved
 
-- multiplicities: Should the output be printed `n` times where `n` is the number of occurrence of the root?
-Say we have `(x+1)^2`, we then have 2 roots `x = -1`, by default the output is `[-1]`, If multiplicites is inputed as true,
-then the output is `[-1, -1]`.
+- multiplicities: Should the output be printed `n` times where `n` is the number of occurrence of the root? Say we have `(x+1)^2`, we then have 2 roots `x = -1`, by default the output is `[-1]`, If multiplicites is inputed as true, then the output is `[-1, -1]`.
 
 # Examples
 
-## Example 1
+## `solve_univar` (uses factoring and analytic solutions up to degree 4)
 ```jldoctest
 julia> solve(x^7 - 1, x)
 2-element Vector{Any}:
 roots_of((1//1) + x + x^2 + x^3 + x^4 + x^5 + x^6)
  1//1
 ```
-
-## Example 2
 ```jldoctest
 julia> expr = expand((x + 3)*(x^2 + 2x + 1)*(x + 2))
 6 + 17x + 17(x^2) + 7(x^3) + x^4
@@ -55,7 +54,7 @@ julia> solve(expr, x, true)
  -3//1
 ```
 
-## Example 3
+## `solve_multivar` (uses Groebner basis and `solve_univar` to find roots)
 ```jldoctest
 julia> eqs = [x+y^2+z, z*x*y, z+3x+y]
 3-element Vector{Num}:
@@ -71,12 +70,31 @@ julia> solve(eqs, [x,y,z])
 ```
 
 
-## Example 4
+## `solve_multipoly` (uses GCD between the input polys)
 ```jldoctest
 julia> solve([x-1, x^3 - 1, x^2 - 1, (x-1)^20], x)
 1-element Vector{Rational{BigInt}}:
  1
 ```
+
+## `ia_solve` (solving by isolation and attraction)
+```jldoctest
+julia> solve(2^(x+1) + 5^(x+3), x)
+1-element Vector{SymbolicUtils.BasicSymbolic{Real}}:
+ (-log(2) + 3log(5) - log(complex(-1))) / (log(2) - log(5))
+```
+```jldoctest
+julia> solve(log(x+1)+log(x-1), x)
+2-element Vector{SymbolicUtils.BasicSymbolic{Real}}:
+ (1//2)*RootFinding.ssqrt(8.0)
+ (-1//2)*RootFinding.ssqrt(8.0)
+```
+```jldoctest
+julia> solve(a*x^b + c, x)
+((-c)^(1 / b)) / (a^(1 / b))
+```
+# References
+[^1]: [R. W. Hamming, Coding and Information Theory, ScienceDirect, 1980](https://www.sciencedirect.com/science/article/pii/S0747717189800070).
 """
 function solve(expr, x, multiplicities=false)
     type_x = typeof(x)

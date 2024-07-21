@@ -1,16 +1,29 @@
 using Symbolics
+include("coeffs.jl")
+include("nemo_stuff.jl")
+include("solve_helpers.jl")
+include("postprocess.jl")
+include("univar.jl")
+include("isoa_helpers.jl")
+include("polynomialization.jl")
+include("attract.jl")
+include("main.jl")
+
 
 function isolate(lhs, var)
     rhs = Vector{Any}([0])
     lhs = Symbolics.unwrap(lhs)
     while !isequal(lhs, var)
         subs, poly = filter_poly(lhs, var)
-        if check_poly_inunivar(poly, var)
-            roots = []
-            for i = 1:length(rhs)
-                append!(roots, solve(Symbolics.wrap(lhs-rhs[i]), var))
+        try
+            if check_poly_inunivar(poly, var)
+                roots = []
+                for i = 1:length(rhs)
+                    append!(roots, solve(Symbolics.wrap(lhs-rhs[i]), var))
+                end
+                return roots
             end
-            return roots
+        catch e
         end
 
         oper = Symbolics.operation(lhs)
@@ -63,7 +76,7 @@ function isolate(lhs, var)
                 rhs = map(sol -> Symbolics.term(/, Symbolics.term(slog, sol), Symbolics.term(slog, args[1])), rhs)
             end
 
-        elseif oper === (log)
+        elseif oper === (log) || oper === (slog)
             lhs = args[1]
             rhs = map(sol -> Symbolics.term(^, Base.MathConstants.e, sol), rhs)
 
@@ -111,7 +124,7 @@ function isolate(lhs, var)
     end
     # make sure postprocess_root doesnt expand constants here
     # like π and ℯ
-    return map(postprocess_root, rhs)
+    return rhs
 end
 
 
@@ -163,5 +176,4 @@ function ia_solve(lhs, var)
 end
 
 @variables x
-expr = sqrt(log(cbrt(x^2)))
-# nl_solve(expr, x)
+ia_solve(log(x+1)+log(x-1), x)

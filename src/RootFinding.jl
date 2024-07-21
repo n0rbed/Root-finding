@@ -33,7 +33,7 @@ export check_polynomial
 export postprocess_root
 
 # transcendental solver
-export nl_solve
+export ia_solve
 
 # trans solver helpers
 export n_occurrences
