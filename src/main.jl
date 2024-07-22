@@ -3,6 +3,8 @@ using Symbolics, Groebner, SymbolicUtils
 """
     solve(expr, x, multiplicities=false)
 
+Solve equations symbolically.
+
 Solve is a function which equates the input expression/s to 0 and solves for the input variable/s x (Symbolics variables).
 It can take a single variable, a vector of variables, a single expression, an array of expressions.
 The base solver has multiple solvers which chooses from depending on the the type of input (multiple/uni var and multiple/single expression)
@@ -15,6 +17,9 @@ in terms of a single variable. Say `log(x) - a == 0` gives us `[e^a]` using ia_s
 the solver uses 3 polynomial solvers appropriately depending on the input. 
 
 # Available solvers
+
+The `solve` function implements the following backends:
+
 - `solve_univar` (single variable single polynomial)
 - `solve_multivar` (multiple variables multiple polynomials)
 - `solve_multipoly` (single variable multiple polynomials)
@@ -28,6 +33,10 @@ the solver uses 3 polynomial solvers appropriately depending on the input.
 - multiplicities: Should the output be printed `n` times where `n` is the number of occurrence of the root? Say we have `(x+1)^2`, we then have 2 roots `x = -1`, by default the output is `[-1]`, If multiplicites is inputed as true, then the output is `[-1, -1]`.
 
 # Examples
+
+TODO(Alex): add a parametric polynomial solve (perhaps smaller) to show-case `roots_of`:
+julia> f = expand((x - a)^2 * (x^10 - 1) * (a*x^2 + b*x * c) * (x^20 + a))
+julia> RootFinding.solve(f, x)
 
 ## `solve_univar` (uses factoring and analytic solutions up to degree 4)
 ```jldoctest
