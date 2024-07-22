@@ -157,6 +157,28 @@ function solve(expr, x, multiplicities=false)
     end
 end
 
+"""
+    solve_univar(expression, x, mult=false)
+This solver uses analytic solutions up to degree 4 to solve univariate polynomials.
+It first handles the special case of the expression being of operation `^`. E.g. ```math (x+2)^{20}```.
+We solve this by removing the int `20`, then solving the poly ```math x+2``` on its own.
+If the parameter mult of the solver is set to true, we then repeat the found roots of ```math x+2```
+twenty times before returning the results to the user.
+
+Step 2 is filtering the expression after handling this special case, and then factoring
+it using `factor_use_nemo`. We then solve all the factors outputted using the analytic methods
+implemented in the function `get_roots` and its children.
+
+# Arguments
+- expr: Single symbolics Num or SymbolicUtils.BasicSymbolic expression. This is equated to 0 and then solved. E.g. `expr = x+2`, we solve `x+2 = 0`
+
+- x: Single symbolics variable
+
+- mult: Print repeated roots or not?
+
+# Examples
+
+"""
 function solve_univar(expression, x, mult=false)
     args = []
     mult_n = 1

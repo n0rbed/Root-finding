@@ -1,6 +1,6 @@
 using RootFinding, Symbolics
 using Test
-
+import RootFinding: ssqrt, slog, scbrt
 E = Base.MathConstants.e
 
 function sort_roots(roots)
@@ -41,9 +41,9 @@ end
 @variables x y z
 
 @testset "Invalid input" begin
-    @test_throws AssertionError get_roots(x, x^2)
-    @test_throws AssertionError get_roots(x^3 + sin(x), x)
-    @test_throws AssertionError get_roots(1/x, x)
+    @test_throws AssertionError RootFinding.get_roots(x, x^2)
+    @test_throws AssertionError RootFinding.get_roots(x^3 + sin(x), x)
+    @test_throws AssertionError RootFinding.get_roots(1/x, x)
 end
 
 @testset "Deg 1 univar" begin
@@ -55,7 +55,7 @@ end
 
     @test isequal(solve((x+1)^20, x), [-1])
 
-    @test isequal(get_roots_deg1(x + y^3, x), [-y^3])
+    @test isequal(RootFinding.get_roots_deg1(x + y^3, x), [-y^3])
 
     expr = x - Symbolics.term(sqrt, 2)
     @test isequal(solve(expr, x)[1], Symbolics.term(sqrt, 2))
@@ -66,21 +66,21 @@ end
 
 @testset "Deg 2 univar" begin
     expr = x^2 + 1
-    arr_get_roots = sort_roots(eval.(Symbolics.toexpr.(get_roots_deg2(expr, x))))
+    arr_get_roots = sort_roots(eval.(Symbolics.toexpr.(RootFinding.get_roots_deg2(expr, x))))
     arr_solve_roots = sort_roots(eval.(Symbolics.toexpr.(solve(expr, x))))
     arr_known_roots = sort_roots([-im, im])
     @test all(arr_get_roots .≈ arr_known_roots)
     @test all(arr_solve_roots .≈ arr_known_roots)
 
     expr = x^2 + 2x + 10
-    arr_get_roots = sort_roots(eval.(Symbolics.toexpr.(get_roots_deg2(expr, x))))
+    arr_get_roots = sort_roots(eval.(Symbolics.toexpr.(RootFinding.get_roots_deg2(expr, x))))
     arr_solve_roots = sort_roots(eval.(Symbolics.toexpr.(solve(expr, x))))
     arr_known_roots = sort_roots([-1 + 3im, -1 - 3im])
     @test all(arr_get_roots .≈ arr_known_roots)
     @test all(arr_solve_roots .≈ arr_known_roots)
 
     expr = x^2 - 10x + 25
-    arr_get_roots = sort_roots(eval.(Symbolics.toexpr.(get_roots_deg2(expr, x))))
+    arr_get_roots = sort_roots(eval.(Symbolics.toexpr.(RootFinding.get_roots_deg2(expr, x))))
     arr_solve_roots = sort_roots(eval.(Symbolics.toexpr.(solve(expr, x))))
     arr_known_roots = [5,5]
     @test all(arr_get_roots .≈ arr_known_roots)
@@ -89,21 +89,21 @@ end
 
 @testset "Deg 3 univar" begin
     expr = x^3 - 2x^2 + x - 2 
-    arr_get_roots = sort_roots(eval.(Symbolics.toexpr.(get_roots_deg3(expr, x))))
+    arr_get_roots = sort_roots(eval.(Symbolics.toexpr.(RootFinding.get_roots_deg3(expr, x))))
     arr_solve_roots = sort_roots(eval.(Symbolics.toexpr.(solve(expr, x))))
     arr_known_roots = sort_roots([2, -im, im])
     @test all(isapprox.(arr_get_roots, arr_known_roots, atol=0.0000001))
     @test all(arr_solve_roots .≈ arr_known_roots)
 
     expr = x^3 + x^2 + x + 1
-    arr_get_roots = sort_roots(eval.(Symbolics.toexpr.(get_roots_deg3(expr, x))))
+    arr_get_roots = sort_roots(eval.(Symbolics.toexpr.(RootFinding.get_roots_deg3(expr, x))))
     arr_solve_roots = sort_roots(eval.(Symbolics.toexpr.(solve(expr, x))))
     arr_known_roots = sort_roots([-1, -im, im])
     @test all(isapprox.(arr_get_roots, arr_known_roots, atol=0.0000001))
     @test all(arr_solve_roots .≈ arr_known_roots)
 
     expr = x^3 + 10x
-    arr_get_roots = sort_roots(eval.(Symbolics.toexpr.(get_roots_deg3(expr, x))))
+    arr_get_roots = sort_roots(eval.(Symbolics.toexpr.(RootFinding.get_roots_deg3(expr, x))))
     arr_solve_roots = sort_roots(eval.(Symbolics.toexpr.(solve(expr, x))))
     arr_known_roots = sort_roots([0, -sqrt(10)*im, sqrt(10)*im])
     @test all(arr_get_roots .≈ arr_known_roots)
@@ -112,28 +112,28 @@ end
 
 @testset "Deg 4 univar" begin
     expr = x^4 + 1
-    arr_get_roots = sort_roots(eval.(Symbolics.toexpr.(get_roots_deg4(expr, x))))
+    arr_get_roots = sort_roots(eval.(Symbolics.toexpr.(RootFinding.get_roots_deg4(expr, x))))
     arr_solve_roots = sort_roots(eval.(Symbolics.toexpr.(solve(expr, x))))
     arr_known_roots = sort_roots(eval.([-(complex(-1))^(1/4),(complex(-1))^(1/4), (complex(-1))^(3/4), -(complex(-1))^(3/4)]))
     @test all(arr_get_roots .≈ arr_known_roots)
     @test all(arr_solve_roots .≈ arr_known_roots)
 
     expr = x^4 - 3x^2 + 2
-    arr_get_roots = sort_roots(eval.(Symbolics.toexpr.(get_roots_deg4(expr, x))))
+    arr_get_roots = sort_roots(eval.(Symbolics.toexpr.(RootFinding.get_roots_deg4(expr, x))))
     arr_solve_roots = sort_roots(eval.(Symbolics.toexpr.(solve(expr, x))))
     arr_known_roots = sort_roots(eval.([-1, 1, sqrt(2), -sqrt(2)]))
     @test all(arr_get_roots .≈ arr_known_roots)
     @test all(arr_solve_roots .≈ arr_known_roots)
 
     expr = x^4 - x^3 - 2x^2 + 6x - 4
-    arr_get_roots = sort_roots(eval.(Symbolics.toexpr.(get_roots_deg4(expr, x))))
+    arr_get_roots = sort_roots(eval.(Symbolics.toexpr.(RootFinding.get_roots_deg4(expr, x))))
     arr_solve_roots = sort_roots(eval.(Symbolics.toexpr.(solve(expr, x))))
     arr_known_roots = sort_roots(eval.([-2, 1, 1-im, 1+im]))
     @test all(arr_get_roots .≈ arr_known_roots)
     @test all(arr_solve_roots .≈ arr_known_roots)
 
     expr = 386314 - 412163x - 357800(x^2) + 1029179(x^3) - 111927(x^4)
-    arr_get_roots = sort_roots(eval.(Symbolics.toexpr.(get_roots_deg4(expr, x))))
+    arr_get_roots = sort_roots(eval.(Symbolics.toexpr.(RootFinding.get_roots_deg4(expr, x))))
     arr_solve_roots = sort_roots(eval.(Symbolics.toexpr.(solve(expr, x))))
     arr_known_roots = sort_roots(eval.([0.5840484 + 0.4176250im, 0.5840484 - 0.4176250im,
     8.788773679354421, -0.76177906049]))
@@ -223,51 +223,51 @@ end
 @testset "Filter poly" begin
     @variables x y z c1 c2 
     poly = x*sqrt(complex(-2)) + 2.23324234
-    subs, filtered_poly = filter_poly(poly, x)
-    @test check_polynomial(filtered_poly)
+    subs, filtered_poly = RootFinding.filter_poly(poly, x)
+    @test RootFinding.check_polynomial(filtered_poly)
 
     poly = x + 2im
-    subs, filtered_poly = filter_poly(poly, x)
-    @test check_polynomial(filtered_poly)
+    subs, filtered_poly = RootFinding.filter_poly(poly, x)
+    @test RootFinding.check_polynomial(filtered_poly)
 
     poly = im*x + Symbolics.wrap(Symbolics.term(sqrt, 2))
-    subs, filtered_poly = filter_poly(poly, x)
-    @test check_polynomial(filtered_poly)
+    subs, filtered_poly = RootFinding.filter_poly(poly, x)
+    @test RootFinding.check_polynomial(filtered_poly)
 
     poly = (1/im)*x + 3*y*z
-    subs, filtered_poly = filter_poly(poly, x)
-    @test check_polynomial(filtered_poly)
+    subs, filtered_poly = RootFinding.filter_poly(poly, x)
+    @test RootFinding.check_polynomial(filtered_poly)
 
     poly = (x+1)*Symbolics.term(log, 3)
-    subs, filtered_poly = filter_poly(poly, x)
-    @test check_polynomial(filtered_poly)
+    subs, filtered_poly = RootFinding.filter_poly(poly, x)
+    @test RootFinding.check_polynomial(filtered_poly)
 end
 
 
 @testset "n func occ (smart occurrence counter)" begin
-    @test n_func_occ(x, x) == 1
-    @test n_func_occ(log(x), x) == 1
-    @test n_func_occ(log(x) + x, x) == 2
+    @test RootFinding.n_func_occ(x, x) == 1
+    @test RootFinding.n_func_occ(log(x), x) == 1
+    @test RootFinding.n_func_occ(log(x) + x, x) == 2
 
     # standby
-    # @test n_func_occ(log(y) + x , x) == 1
+    # @test RootFinding.(log(y) + x , x) == 1
     
-    @test n_func_occ(log(x + sin((x^2 + x)/log(x))), x) == 3
-    @test n_func_occ(x^2 + x + x^3, x) == 1
-    @test n_func_occ(log(x)^2 - 17, x) == 1
-    @test n_func_occ(2^(x^2 + x) + 5^(x+3), x) == 2
+    @test RootFinding.n_func_occ(log(x + sin((x^2 + x)/log(x))), x) == 3
+    @test RootFinding.n_func_occ(x^2 + x + x^3, x) == 1
+    @test RootFinding.n_func_occ(log(x)^2 - 17, x) == 1
+    @test RootFinding.n_func_occ(2^(x^2 + x) + 5^(x+3), x) == 2
 
     expr = log( log(x) + log(x) ) + log( log(x) + log(x) ) - 11
-    @test n_func_occ(expr, x) == 1
+    @test RootFinding.n_func_occ(expr, x) == 1
 
     # log(2) - 3log(5) + x*log(2) - x*log(5)
     expr = expand((1 + x)*Symbolics.term(log, 2) - (3 + x)*Symbolics.term(log, 5))
-    @test n_func_occ(expr, x) == 1
+    @test RootFinding.n_func_occ(expr, x) == 1
 end
 
 
 
-@testset "NL solve" begin
+@testset "Isolate/Attract solve" begin
     @variables a b c d e x
     lhs = ia_solve(a*x^b + c, x)[1]
     lhs2 = solve(a*x^b + c, x)[1]
@@ -351,30 +351,30 @@ end
     @variables x
     # does not sub because these can not be solved as polys
     expr = log(x+1)^2 + log(x) + 1
-    expr, sub = turn_to_poly(expr, x)
+    expr, sub = RootFinding.turn_to_poly(expr, x)
     @test isequal(sub, Dict())
 
     expr = 2log(x)^2 + sin(x) + 1
-    expr, sub = turn_to_poly(expr, x)
+    expr, sub = RootFinding.turn_to_poly(expr, x)
     @test isequal(sub, Dict())
 
     
     # subs and turns to polys
     expr = log(x)^2 + log(x) + 1
-    expr, sub = turn_to_poly(expr, x)
-    @test check_polynomial(expr)
+    expr, sub = RootFinding.turn_to_poly(expr, x)
+    @test RootFinding.check_polynomial(expr)
 
     expr = 2log(x^2 + 1)^2 + 3log(x^2 + 1) + 1
-    expr, sub = turn_to_poly(expr, x)
-    @test check_polynomial(expr)
+    expr, sub = RootFinding.turn_to_poly(expr, x)
+    @test RootFinding.check_polynomial(expr)
 
     expr = sin(x^2)^2 + 3sin(x^2) + 1
-    expr, sub = turn_to_poly(expr, x)
-    @test check_polynomial(expr)
+    expr, sub = RootFinding.turn_to_poly(expr, x)
+    @test RootFinding.check_polynomial(expr)
 
     expr = 9^(x^2 + 1) + 3^(x^2 + 1) + 2
-    expr, sub = turn_to_poly(expr, x)
-    @test check_polynomial(expr)
+    expr, sub = RootFinding.turn_to_poly(expr, x)
+    @test RootFinding.check_polynomial(expr)
 end
 
 
