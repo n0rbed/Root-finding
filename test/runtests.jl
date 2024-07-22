@@ -285,7 +285,8 @@ end
     lhs = sort_roots(eval.(Symbolics.toexpr.(ia_solve(expr, x))))
     lhs_solve = sort_roots(eval.(Symbolics.toexpr.(solve(expr, x))))
     rhs = sort_roots([1, -1])
-    @test isequal(lhs, rhs)
+    @test all(isapprox.(lhs, rhs, atol=1e-6))
+    @test all(isapprox.(lhs_solve, rhs, atol=1e-6))
 
     expr = 2^(x+1) + 5^(x+3)
     lhs = eval.(Symbolics.toexpr.(ia_solve(expr, x)))

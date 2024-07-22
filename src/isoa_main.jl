@@ -1,4 +1,5 @@
 using Symbolics
+E = Base.MathConstants.e
 
 function isolate(lhs, var)
     rhs = Vector{Any}([0])
@@ -55,12 +56,24 @@ function isolate(lhs, var)
 
 
         elseif oper === (^)
-            if any(isequal(x, var) for x in Symbolics.get_variables(args[1])) && all(!isequal(x, var) for x in Symbolics.get_variables(args[2]))
+            if any(isequal(x, var) for x in Symbolics.get_variables(args[1])) && n_occurrences(args[2], var) == 0 && args[2] isa Integer
+                lhs = args[1]
+                power = args[2]
+                new_roots = []
+
+                for i in eachindex(rhs)
+                    for k in 0:(args[2]-1)
+                        r = Symbolics.wrap(Symbolics.term(^, rhs[i], (1//power)))
+                        c = Symbolics.wrap(Symbolics.term(*, 2*(k), pi))*im/power
+                        root = r*E^c
+                        push!(new_roots, root)
+                    end
+                end
+                rhs = []
+                append!(rhs, new_roots)
+            elseif any(isequal(x, var) for x in Symbolics.get_variables(args[1])) && n_occurrences(args[2], var) == 0
                 lhs = args[1]
                 rhs = map(sol -> Symbolics.term(^, sol, 1//args[2]), rhs)
-                if args[2] isa Int64 && iseven(args[2])
-                    append!(rhs, map(sol -> -sol, rhs))
-                end
             else
                 lhs = args[2]
                 rhs = map(sol -> Symbolics.term(/, Symbolics.term(slog, sol), Symbolics.term(slog, args[1])), rhs)
