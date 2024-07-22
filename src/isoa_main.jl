@@ -1,5 +1,15 @@
 using Symbolics
 E = Base.MathConstants.e
+include("coeffs.jl")
+include("nemo_stuff.jl")
+include("solve_helpers.jl")
+include("postprocess.jl")
+include("univar.jl")
+include("isoa_helpers.jl")
+include("polynomialization.jl")
+include("attract.jl")
+include("main.jl")
+
 
 function isolate(lhs, var)
     rhs = Vector{Any}([0])
@@ -179,4 +189,4 @@ function ia_solve(lhs, var)
 end
 
 @variables x
-ia_solve(log(x+1)+log(x-1), x)
+ia_solve(sqrt(log(exp(x)^2)) - 1, x)

@@ -35,7 +35,7 @@ function n_func_occ(expr, var)
     expr = Symbolics.unwrap(expr)
     !iscall(expr) && return n_occurrences(expr, var)
     args, cur_oper = Symbolics.arguments(expr), Symbolics.operation(expr)
-    counted_ops = [sin, log, log2, log10, cos, tan, asin, acos, atan, exp]
+    counted_ops = [sqrt, cbrt, sin, log, log2, log10, cos, tan, asin, acos, atan, exp, ssqrt, scbrt, slog]
     n = 0
 
 
@@ -55,7 +55,7 @@ function n_func_occ(expr, var)
 
             args_arg = Symbolics.arguments(arg)
             oper_arg = Symbolics.operation(arg)
-            case_1_pow = oper_arg === (^) && n_occurrences(args_arg[2], var) == 0  && n_occurrences(args_arg[1], var) != 0 && !check_poly_inunivar(args_arg[1], var)
+            case_1_pow = oper_arg === (^) && n_occurrences(args_arg[2], var) == 0  && n_occurrences(args_arg[1], var) != 0
             case_2_pow = oper_arg === (^) && n_occurrences(args_arg[2], var) != 0  && n_occurrences(args_arg[1], var) == 0  
             is_var_outside(arg) = check_poly_inunivar(arg, var) && !outside && n_occurrences(arg, var) != 0
 
@@ -134,5 +134,3 @@ function find_logandexpon(arg, var, oper, poly_index)
     !isequal(oper_term, 0) && !isequal(constant_term, 0) && return true
     return false
 end
-
-

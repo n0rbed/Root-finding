@@ -62,9 +62,7 @@ function slog(n)
         return log(n)
     end
 
-    if n isa SymbolicUtils.BasicSymbolic{Real}
-        return Symbolics.term(slog, n)
-    end
+    return Symbolics.term(slog, n)
 end
 
 
