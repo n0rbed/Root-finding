@@ -262,7 +262,7 @@ function solve_multipoly(polys::Vector, x::Num, mult=false)
 
     gcd = gcd_use_nemo(polys[1], polys[2])
 
-    for i = 3:length(polys)
+    for i in eachindex(polys)[3:end]
         gcd = gcd_use_nemo(gcd, polys[i])
     end
     
@@ -295,7 +295,7 @@ function solve_multivar(eqs::Vector{Num}, vars::Vector{Num}, mult=false)
             generating &= false
         end
 
-        for i = 2:length(new_eqs)
+        for i  in eachindex(new_eqs)[2:end]
             generating |= all(Symbolics.degree(var) > 1 for var in Symbolics.get_variables(new_eqs[i]))
         end
     end

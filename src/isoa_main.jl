@@ -1,14 +1,4 @@
 using Symbolics
-include("coeffs.jl")
-include("nemo_stuff.jl")
-include("solve_helpers.jl")
-include("postprocess.jl")
-include("univar.jl")
-include("isoa_helpers.jl")
-include("polynomialization.jl")
-include("attract.jl")
-include("main.jl")
-
 
 function isolate(lhs, var)
     rhs = Vector{Any}([0])
@@ -18,7 +8,7 @@ function isolate(lhs, var)
         try
             if check_poly_inunivar(poly, var)
                 roots = []
-                for i = 1:length(rhs)
+                for i in eachindex(rhs)
                     append!(roots, solve(Symbolics.wrap(lhs-rhs[i]), var))
                 end
                 return roots

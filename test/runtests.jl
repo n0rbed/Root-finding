@@ -8,7 +8,7 @@ function sort_roots(roots)
 end
 
 function sort_arr(sols, vars)
-    for i = 1:length(sols)
+    for i in eachindex(sols) 
         sols[i] = convert(Dict{Num, Any}, sols[i])
         for (var, root) in sols[i]
             sols[i][var] = eval(Symbolics.toexpr(root))

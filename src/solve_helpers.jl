@@ -177,7 +177,7 @@ function add_sol_to_all(solutions, new_sols, var)
     solutions = []
     for new_sol in new_sols
         copy_sol = deepcopy(existing_solutions)
-        for i = 1:length(copy_sol)
+        for i in eachindex(copy_sol)
             copy_sol[i][var] = new_sol
         end
         append!(solutions, copy_sol)
