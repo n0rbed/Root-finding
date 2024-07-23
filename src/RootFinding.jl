@@ -5,10 +5,10 @@ include("nemo_stuff.jl")
 include("solve_helpers.jl")
 include("postprocess.jl")
 include("univar.jl")
-include("isoa_helpers.jl")
+include("ia_helpers.jl")
 include("polynomialization.jl")
 include("attract.jl")
-include("isoa_main.jl")
+include("ia_main.jl")
 include("main.jl")
 
 export solve

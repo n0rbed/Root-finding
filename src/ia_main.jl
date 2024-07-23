@@ -1,15 +1,5 @@
 using Symbolics
 E = Base.MathConstants.e
-include("coeffs.jl")
-include("nemo_stuff.jl")
-include("solve_helpers.jl")
-include("postprocess.jl")
-include("univar.jl")
-include("isoa_helpers.jl")
-include("polynomialization.jl")
-include("attract.jl")
-include("main.jl")
-
 
 function isolate(lhs, var)
     rhs = Vector{Any}([0])
@@ -176,6 +166,69 @@ function attract(lhs, var)
     return new_roots
 end
 
+"""
+    ia_solve(lhs, var)
+This function attempts to solve transcendental functions by first checking
+the "smart" number of occurrences in the input LHS. By smart here we mean
+that polynomials are counted as 1 occurrence. for example `x^2 + 2x` is 1
+occurrence of x. So we abstract all occurrences of x's as polynomials.
+Say: `log(x+1) + x^2` is seen as `log(f(x)) + g(x)` so there are 2 ocurrences
+of x. If there is only 1 occurrence of x in an input expression, isolate is called.
+
+Isolate reverses all operations applied on the occurrence of x until we have
+`f(x) = some constant` then we can solve this using our polynomial solvers.
+
+If more than 1 occurrence of x is found, `ia_solve` attempts to attract the
+occurrences of x in order to reduce these occurrences to 1. For example,
+`log(x+1) + log(x-1)` can be converted to `log(x^2 - 1)` which now could be
+isolated using Isolate.
+
+`attract(lhs, var)` currently uses 3 techniques for attraction.
+- Log addition: `log(f(x)) + log(g(x)) => log(h(x))`
+- Exponential simplification: `a*b^(f(x)) + c*d^(g(x)) => f(x) * log(b) - g(x) * log(d) + log(-a/c)`. And now this is actually 1 occurrence of x since `f(x)` and `g(x)` are just multiplied by constants not wrapped in some operation.
+- Trig simplification: this bruteforces multiple trig identities and doesn't detect them before hand.
+- Polynomialization: as a last resort, attract attempts to polynomialize the expression. Say `sin(x+2)^2 + sin(x+2) + 10` is converted to `X^2 + X + 10`, we then solve this using our polynomial solver, and afterwards, isolate `sin(x+2) = the roots found by solve for X^2 + X + 10`
+
+After attraction, we check the number of ocurrences again, and if its 1, we isolate, if not,
+we throw an error to tell the user that this is currently unsolvable by our covered techniques.
+
+# Arguments
+- lhs: a Symbolics Num/SymbolicUtils.BasicSymbolic
+- var: variable to solve for.
+
+# Examples
+```jldoctest
+julia> solve(a*x^b + c, x)
+((-c)^(1 / b)) / (a^(1 / b))
+```
+
+```jldoctest
+julia> solve(2^(x+1) + 5^(x+3), x)
+1-element Vector{SymbolicUtils.BasicSymbolic{Real}}:
+ (-log(2) + 3log(5) - log(complex(-1))) / (log(2) - log(5))
+```
+
+```jldoctest
+julia> solve(log(x+1)+log(x-1), x)
+2-element Vector{SymbolicUtils.BasicSymbolic{Real}}:
+ (1//2)*RootFinding.ssqrt(8.0)
+ (-1//2)*RootFinding.ssqrt(8.0)
+```
+
+```jldoctest
+julia> expr = sin(x+2)^2 + sin(x+2) + 10
+10 + sin(2 + x) + sin(2 + x)^2
+
+julia> RootFinding.ia_solve(expr, x)
+[ Info: var"##230" ϵ Ζ: e.g. 0, 1, 2...
+[ Info: var"##234" ϵ Ζ: e.g. 0, 1, 2...
+2-element Vector{SymbolicUtils.BasicSymbolic{Real}}:
+ -2 + π*2var"##230" + asin((1//2)*(-1 + RootFinding.ssqrt(-39)))
+ -2 + π*2var"##234" + asin((1//2)*(-1 - RootFinding.ssqrt(-39)))
+```
+# References
+[^1]: [R. W. Hamming, Coding and Information Theory, ScienceDirect, 1980](https://www.sciencedirect.com/science/article/pii/S0747717189800070).
+"""
 function ia_solve(lhs, var)
     nx = n_func_occ(lhs, var)
     if nx == 0
@@ -187,6 +240,3 @@ function ia_solve(lhs, var)
     end
 
 end
-
-@variables x
-ia_solve(sqrt(log(exp(x)^2)) - 1, x)

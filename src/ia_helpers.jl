@@ -55,12 +55,13 @@ function n_func_occ(expr, var)
 
             args_arg = Symbolics.arguments(arg)
             oper_arg = Symbolics.operation(arg)
-            case_1_pow = oper_arg === (^) && n_occurrences(args_arg[2], var) == 0  && n_occurrences(args_arg[1], var) != 0
-            case_2_pow = oper_arg === (^) && n_occurrences(args_arg[2], var) != 0  && n_occurrences(args_arg[1], var) == 0  
             is_var_outside(arg) = check_poly_inunivar(arg, var) && !outside && n_occurrences(arg, var) != 0
+            case_1_pow = oper_arg === (^) && n_occurrences(args_arg[2], var) == 0  && n_occurrences(args_arg[1], var) != 0 && is_var_outside(arg)
+            case_2_pow = oper_arg === (^) && n_occurrences(args_arg[2], var) != 0  && n_occurrences(args_arg[1], var) == 0  
+            case_3_pow = oper_arg === (^) && n_occurrences(args_arg[2], var) == 0  && n_occurrences(args_arg[1], var) != 0 && !check_poly_inunivar(args_arg[1], var)
 
             # any transcedental operation and the case:  (weird_transcedental_f(x))^(something)
-            if any(isequal(oper, op) for op in counted_ops) || case_1_pow
+            if any(isequal(oper, op) for op in counted_ops) || case_3_pow
                 n += n_func_occ(args_arg[1], var)
             
             # the case (some constant)^(f(x))
